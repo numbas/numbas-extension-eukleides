@@ -1882,6 +1882,16 @@ class CanvasDrawer extends Drawer {
         this.check_basic_settings();
         this.polygon(set);
         ctx.stroke();
+        if(!this.local.close && this.local.arrow != NONE && set.points.length>=2) {
+            if(this.local.dir==BACK || this.local.arrow==ARROWS) {
+                const [p1,p2] = set.points;
+                this.draw_arrow(p1.x,p1.y,argument(p2,p1),this.SIZE(0.1));
+            }
+            if(this.local.dir==FORTH || this.local.arrow==ARROWS) {
+                const [p3,p4] = [set.points[set.points.length-2], set.points[set.points.length-1]];
+                this.draw_arrow(p4.x,p4.y,argument(p3,p4),this.SIZE(0.1));
+            }
+        }
     }
     fill_polygon(set) {
         const ctx = this.ctx;
@@ -1973,6 +1983,15 @@ class CanvasDrawer extends Drawer {
         ctx.beginPath();
         ctx.arc(c.x,c.y,c.r,a,b);
         ctx.stroke();
+        if(this.local.arrow!=NONE) {
+            const d = acos(this.SIZE(.06)/c.r);
+            if(this.local.dir == BACK || this.local.arrow == ARROWS) {
+                this.draw_arrow(c.x+c.r*cos(a), c.y+c.r*sin(a), a-d, this.SIZE(0.1));
+            }
+            if(this.local.dir == FORTH || this.local.arrow == ARROWS) {
+                this.draw_arrow(c.x+c.r*cos(b), c.y+c.r*sin(b), b+d, this.SIZE(0.1));
+            }
+        }
     }
 
     fill_circle(c) {
