@@ -144,7 +144,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return new euk.Point(x,y);
     }));
 
-    extension.scope.addFunction(new funcObj('polar',[TNum,TNum],TPoint,function(r,a) {
+    extension.scope.addFunction(new funcObj('polar',[TNum,TAngle],TPoint,function(r,a) {
         return euk.Point.create_polar(r,a);
     }));
 
@@ -164,7 +164,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return euk.Point.create_point_with_ordinate(line,y);
     }));
 
-    extension.scope.addFunction(new funcObj('point',[TCircle,TNum],TPoint,function(circle,a) {
+    extension.scope.addFunction(new funcObj('point',[TCircle,TAngle],TPoint,function(circle,a) {
         return euk.Point.create_point_on_circle(circle,a);
     }));
 
@@ -196,7 +196,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return p.symmetric(origin);
     }));
 
-    extension.scope.addFunction(new funcObj('rotate',[TPoint,TPoint,TNum],TPoint,function(p,origin,angle) {
+    extension.scope.addFunction(new funcObj('rotate',[TPoint,TPoint,TAngle],TPoint,function(p,origin,angle) {
         return p.rotate(angle,origin);
     }));
 
@@ -228,19 +228,19 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return unvec(euk.Vector.create_from_line(line));
     }));
 
-    extension.scope.addFunction(new funcObj('rotate',[TVector,TNum],TVector,function(v,a) {
+    extension.scope.addFunction(new funcObj('rotate',[TVector,TAngle],TVector,function(v,a) {
         return unvec(vec(c).rotate(a));
     }));
 
-    extension.scope.addFunction(new funcObj('argument',[TVector],TNum,function(v) {
+    extension.scope.addFunction(new funcObj('argument',[TVector],TAngle,function(v) {
         return vec(v).argument();
     }));
 
-    extension.scope.addFunction(new funcObj('angle_between',[TVector,TVector],TNum,function(u,v) {
+    extension.scope.addFunction(new funcObj('angle_between',[TVector,TVector],TAngle,function(u,v) {
         return euk.Vector.angle_between(vec(u),vec(v));
     }));
 
-    extension.scope.addFunction(new funcObj('line',[TPoint,TNum],TLine,function(origin,angle) {
+    extension.scope.addFunction(new funcObj('line',[TPoint,TAngle],TLine,function(origin,angle) {
         return new euk.Line(origin.x,origin.y,angle);
     }));
 
@@ -300,7 +300,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return line.symmetric(p);
     }));
 
-    extension.scope.addFunction(new funcObj('rotate',[TLine,TPoint,TNum],TLine,function(line,origin,angle) {
+    extension.scope.addFunction(new funcObj('rotate',[TLine,TPoint,TAngle],TLine,function(line,origin,angle) {
         return line.rotate(origin,angle);
     }));
 
@@ -308,7 +308,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return line.homothetic(origin,k);
     }));
 
-    extension.scope.addFunction(new funcObj('argument',[TLine],TNum,function(line) {
+    extension.scope.addFunction(new funcObj('argument',[TLine],TAngle,function(line) {
         return line.argument();
     }));
 
@@ -336,7 +336,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return new euk.Set(points);
     },{unwrapValues: true}))
 
-    extension.scope.addFunction(new funcObj('polygon',[TNum,TPoint,TNum,TNum],TPointSet,function(n,origin,r,a) {
+    extension.scope.addFunction(new funcObj('polygon',[TNum,TPoint,TNum,TAngle],TPointSet,function(n,origin,r,a) {
         return euk.Set.create_polygon(n,origin,r,a);
     }));
 
@@ -379,7 +379,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return set.symmetric(p);
     }));
 
-    extension.scope.addFunction(new funcObj('rotate',[TPointSet,TPoint,TNum],TPointSet,function(set,origin,a) {
+    extension.scope.addFunction(new funcObj('rotate',[TPointSet,TPoint,TAngle],TPointSet,function(set,origin,a) {
         return set.rotate(origin,a);
     }));
 
@@ -427,16 +427,32 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return circle.center();
     }));
 
-    extension.scope.addFunction(new funcObj('tangent',[TCircle,TNum],TLine,function(circle,a) {
+    extension.scope.addFunction(new funcObj('tangent',[TCircle,TAngle],TLine,function(circle,a) {
         return circle.tangent(a);
     }));
 
-    extension.scope.addFunction(new funcObj('arc',[TCircle,TNum,TNum],TCircle,function(circle,from,to) {
+    extension.scope.addFunction(new funcObj('arc',[TCircle,TAngle,TAngle],TCircle,function(circle,from,to) {
         var c = new TCircle(circle);
         c.from = from;
         c.to = to;
         return c;
     },{unwrapValues:true}));
+
+    extension.scope.addFunction(new funcObj('ellipse',[TPoint,TNum,TNum,TAngle],TConic,function(v,a,b,d) {
+        return new euk.Ellipse(v,a,b,d);
+    }));
+
+    extension.scope.addFunction(new funcObj('hyperbola',[TPoint,TNum,TNum,TAngle],TConic,function(v,x,y,a) {
+        return new euk.Hyperbola(v,x,y,a);
+    }));
+
+    extension.scope.addFunction(new funcObj('parabola',[TPoint,TNum,TNum,TAngle],TConic,function(v,a,d) {
+        return new euk.Parabola(v,a,d);
+    }));
+
+    extension.scope.addFunction(new funcObj('parabola',[TPoint,TLine,TNum],TConic,function(A,l) {
+        return euk.Conic.create_with_directrix(A,l,1);
+    }));
 
     extension.scope.addFunction(new funcObj('conic',[TPoint,TLine,TNum],TConic,function(A,l,x) {
         return euk.Conic.create_with_directrix(A,l,x);
@@ -452,7 +468,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
 
     extension.scope.addFunction(new funcObj('foci',[TConic],TList,function(conic) {
         return conic.foci();
-    }));
+    },{unwrapValues:true}));
 
     extension.scope.addFunction(new funcObj('+',[TConic,TVector],TConic,function(conic,u) {
         return conic.translate(vec(u));
@@ -470,7 +486,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return conic.symmetric(p);
     }));
 
-    extension.scope.addFunction(new funcObj('rotate',[TConic,TPoint,TNum],TConic,function(conic,origin,a) {
+    extension.scope.addFunction(new funcObj('rotate',[TConic,TPoint,TAngle],TConic,function(conic,origin,a) {
         return conic.rotate(origin,a);
     }));
 
@@ -478,15 +494,15 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return conic.homothetic(origin,k);
     }));
 
-    extension.scope.addFunction(new funcObj('major_axis',[TConic],TNum,function(conic) {
+    extension.scope.addFunction(new funcObj('major',[TConic],TNum,function(conic) {
         return conic.major_axis();
     }));
 
-    extension.scope.addFunction(new funcObj('minor_axis',[TConic],TNum,function(conic) {
+    extension.scope.addFunction(new funcObj('minor',[TConic],TNum,function(conic) {
         return conic.minor_axis();
     }));
 
-    extension.scope.addFunction(new funcObj('argument',[TConic],TNum,function(conic) {
+    extension.scope.addFunction(new funcObj('argument',[TConic],TAngle,function(conic) {
         return conic.argument();
     }));
 
@@ -498,7 +514,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return conic.eccentricity();
     }));
 
-    extension.scope.addFunction(new funcObj('argument',[TConic,TPoint],TNum,function(conic,p) {
+    extension.scope.addFunction(new funcObj('argument',[TConic,TPoint],TAngle,function(conic,p) {
         return conic.point_argument(p);
     }));
 
@@ -506,7 +522,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return conic.tangent(t);
     }));
 
-    extension.scope.addFunction(new funcObj('arc',[TConic,TNum,TNum],TConic,function(conic,from,to) {
+    extension.scope.addFunction(new funcObj('arc',[TConic,TAngle,TAngle],TConic,function(conic,from,to) {
         var c = new TConic(conic);
         c.from = from;
         c.to = to;
@@ -674,13 +690,21 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             var x,s,a = 0;
             // length of first side must be given if fewer than two vertices given
             if(num_vertices<2) {
-                x = args[i].value;
-                i += 1;
+                if(i==args.length) {
+                    x = 6;
+                } else {
+                    x = args[i].value;
+                    i += 1;
+                }
             }
 
             // must give one other length or angle
-            var s = args[i];
-            i += 1;
+            if(i==args.length) {
+                s = new TAngle(Numbas.math.radians(39));
+            } else {
+                s = args[i];
+                i += 1;
+            }
 
             // can optionally give the orientation of the first side if fewer than two vertices given
             if(num_vertices<2 && i<args.length) {
@@ -701,9 +725,12 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             for(var i=0;i<2 && i<variables.length && variables[i].type=='eukleides_point';i++) {
                 num_vertices += 1;
             }
-            // length of first side must be given if fewer than two vertices given
+            // length of first side
             if(num_vertices<2) {
-                if(i>=variables.length || variables[i].type!='number') {
+                if(i==variables.length) {
+                    return true;
+                }
+                if(variables[i].type!='number') {
                     return false;
                 }
                 i += 1;
@@ -928,7 +955,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             var num_vertices = vertices.length;
             var s = 4, a = 0;
             // length of first side must be given if fewer than two vertices given
-            if(num_vertices<2) {
+            if(num_vertices<2 && i<args.length) {
                 s = args[i].value;
                 i += 1;
             }
@@ -947,7 +974,10 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
 
             // length of first side must be given if fewer than two vertices given
             if(num_vertices<2) {
-                if(i>=variables.length || variables[i].type!='number') {
+                if(i==variables.length) {
+                    return true;
+                }
+                if(variables[i].type!='number') {
                     return false;
                 }
                 i += 1;
@@ -1105,6 +1135,22 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             return new TDrawing(nobjects, d.style);
         }
     }))
+
+    extension.scope.addFunction(new funcObj('draw',[TNum,TNum,TNum,TNum,TNum,'*?'],THTML,null,{
+        evaluate: function(args,scope) {
+            var width = args[0].value;
+            var min_x = args[1].value;
+            var min_y = args[2].value;
+            var max_x = args[3].value;
+            var max_y = args[4].value;
+            var canvas = document.createElement('canvas');
+            var drawer = new euk.CanvasDrawer(canvas,width);
+            drawer.setup_frame(min_x,min_y,max_x,max_y,1);
+            var drawing = new TDrawing(args.slice(5));
+            draw_drawing(drawer,drawing.value);
+            return new THTML(canvas);
+        }
+    }));
 
     extension.scope.addFunction(new funcObj('draw',[TNum,'*?'],THTML,null,{
         evaluate: function(args,scope) {

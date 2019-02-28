@@ -4,107 +4,6 @@ window.euk = euk;
 
 const {PI} = Math;
 
-/*
-const canvas = document.getElementById('canvas');
-
-const d = new euk.CanvasDrawer(canvas);
-window.d = d;
-
-const p = new euk.Point(0,0);
-//d.draw_point(p);
-
-/*
-const pentagon = euk.Set.create_polygon(5,new euk.Point(0,0),1,0);
-d.local.color = 'yellow';
-d.fill_polygon(pentagon);
-d.restore_local_settings();
-d.draw_polygon(pentagon);
-
-d.draw_line({x:0,y:0,a:Math.PI*1.25});
-d.local.style = 'dashed';
-d.draw_line({x:0,y:0,a:Math.PI*1.15});
-d.local.style = 'dotted';
-d.draw_line({x:0,y:0,a:Math.PI*1.05});
-
-const A = new Point(3,0);
-const B = new Point(4,0);
-const C = new Point(5,4);
-const s = new Set([A,B,C]);
-d.draw_point(A);
-d.draw_point(B);
-d.draw_point(C);
-d.local.style = 'full';
-d.draw_polygon(s);
-d.draw_circle(Circle.create_circumcircle(A,B,C));
-d.draw_circle(Circle.create_incircle(A,B,C));
-
-const [D,E,F] = TriangleMaker.define_optimal_scalene([],1,0);
-const s2 = new Set([D,E,F]);
-d.draw_polygon(s2);
-
-d.draw_polygon(new Set(TriangleMaker.define_triangle_SSS([],5,5,6,Math.PI/5)));
-d.draw_polygon(new Set(TriangleMaker.define_triangle_SAA([],2,Math.PI/3,Math.PI/4,0)));
-d.draw_polygon(new Set(TriangleMaker.define_triangle_SAS([],1,Math.PI/5,2,0)));
-d.draw_polygon(new Set(TriangleMaker.define_triangle_SSA([],1,1,Math.PI/6,0)));
-d.draw_polygon(new Set(TriangleMaker.define_right_SS([],1,2,0)));
-d.draw_polygon(new Set(TriangleMaker.define_right_SA([],1,Math.PI/12,0)));
-d.draw_polygon(new Set(TriangleMaker.define_isosceles_SS([],1,4,0)));
-d.draw_polygon(new Set(TriangleMaker.define_isosceles_SA([],4,Math.PI/6,0)));
-d.draw_polygon(new Set(TriangleMaker.define_equilateral([],3,0)));
-d.draw_polygon(new Set(TriangleMaker.define_equilateral([new Point(-1,-1)],3,0)));
-d.draw_polygon(new Set(TriangleMaker.define_equilateral([new Point(-1,-1), new Point(0,0)],3,0)));
-const e = new euk.Ellipse(new Point(3,1),1,4,Math.PI/4);
-//d.draw_conic(e);
-const parabola = new euk.Parabola(new Point(0,0),5,Math.PI/4);
-//d.draw_conic(parabola);
-const hyperbola = new euk.Hyperbola(new Point(0.5,0),1,0.99,0.1);
-//d.draw_conic(hyperbola);
-
-const c = euk.Conic.create_with_foci(new Point(0,0), new Point(2,0),1);
-console.log(c);
-d.draw_conic(c);
-
-const c2 = c.homothetic(new Point(1,1),0.1);
-console.log(c2);
-d.draw_conic(c2);
-
-const c = new Circle(p,1);
-//d.draw_circle(c);
-const lp = new Point(2,3);
-d.draw_point(lp);
-const l = new Line(lp,PI/3);
-d.draw_line(l);
-const lsi = euk.line_circle_intersection(l,c);
-console.log(lsi);
-for(let ip of lsi.points) {
-    d.draw_point(ip);
-}
-const e = new euk.Ellipse(new Point(3,1),4,1,Math.PI/6);
-d.draw_conic(e);
-const lei = euk.line_conic_intersection(l,e);
-for(let ip of lei.points) {
-    d.draw_point(ip);
-}
-const parabola = new euk.Parabola(new Point(0,0),5,Math.PI/4);
-d.draw_conic(parabola);
-const lpi = euk.line_conic_intersection(l,parabola);
-for(let ip of lpi.points) {
-    d.draw_point(ip);
-}
-const hyperbola = new euk.Hyperbola(new Point(0.5,0),0.5,0.99,PI/6);
-console.log(hyperbola);
-d.draw_conic(hyperbola);
-const lhi = euk.line_conic_intersection(l,hyperbola);
-for(let ip of lhi.points) {
-    d.draw_point(ip);
-}
-
-//const points = euk.QuadrilateralMaker.define_rectangle([new Point(1,2),new Point(3,1)],0,3);
-//const points = euk.QuadrilateralMaker.define_parallelogram_VV([new Point(-1,2)],new Vector(1,1),new Vector(4,-1));
-const points = euk.QuadrilateralMaker.define_parallelogram_SSA([new Point(1,1),new Point(2,0)],2,PI/4,2,0);
-points.forEach(p=>d.draw_point(p));
-*/
-
 Numbas.queueScript('base',[],function(){});
 
 Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
@@ -177,7 +76,7 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
         point(3,2.5) box, 
         point(4,2.5) plus,
         (point(0,0) .. point(2,3) .. point(4,0)) arrows,
-        (point(0,1) .. point(2,4) .. point(4,1)) closed,
+        (point(0,1) .. point(2,4) .. point(4,1)),
         (point(0,-1) .. point(2,2) .. point(4,-1)) filled transparent,
         let(l1,line(point(-5,2), point(3,4)),
             l2,line(point(8,0),point(-2,10)),
@@ -198,16 +97,16 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
         circle(point(1,3),3) dotted,
         circle(point(1,3),2) dashed size(2) yellow,
         conic(point(2,2),point(3,3),1.5),
-        arc(conic(point(2,4), point(2,5), 0.2),0,pi) green size(3),
-        arc(circle(point(0,0),2),0,pi/2) hsla(240,0.8,0.8,0.5) size(5) arrow,
-        arc(circle(point(0,0),1),0,pi/2) rgba(255,0,0,0.7) size(1) arrows,
+        arc(conic(point(2,4), point(2,5), 0.2),rad(0),rad(pi)) green size(3),
+        arc(circle(point(0,0),2),rad(0),rad(pi/2)) hsla(240,0.8,0.8,0.5) size(5) arrow,
+        arc(circle(point(0,0),1),rad(0),rad(pi/2)) rgba(255,0,0,0.7) size(1) arrows,
         let(l,line(point(0,0),point(5,1)),
-            p,polygon(5,point(3,0),1,0),
+            p,polygon(5,point(3,0),1,rad(0)),
             c,circle(point(5,0.5),1),
             el,conic(point(7,1),point(7,1.5),0.7),
             [
                 l,
-                p blue closed,
+                p blue,
                 intersection(l,p) size(3),
                 c,
                 intersection(l,c) size(3),
@@ -216,13 +115,13 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
             ]
         ),
         let(
-            p1,polygon(5,point(-1,5),1,0),
-            p2,polygon(6,point(0,5),1,0),
+            p1,polygon(5,point(-1,5),1,rad(0)),
+            p2,polygon(6,point(0,5),1,rad(0)),
             c1,circle(point(1.5,5),1),
             c2,circle(point(2.5,4.7),0.5),
             [
-                p1 closed,
-                p2 closed,
+                p1,
+                p2,
                 list(intersection(p1,p2)),
                 c1,
                 c2,
@@ -256,7 +155,7 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
                     a_0 label("A_0",deg(30)),
                     b_0 label("B_0",deg(150)),
                     c_0 label("C_0",deg(-90)),
-                    (a..b..c) closed,
+                    (a..b..c),
                     circle(a',b',c'),
                     ([a..a', b..b', c..c']) dashed
                 ]
@@ -264,7 +163,6 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
         )
     )`);
 
-console.log("ARRRG");
     show_diagram(`draw(900,
         let(
             O,point(0,2),
@@ -279,6 +177,41 @@ console.log("ARRRG");
                 C2 dashed gray,
                 O plus,
                 A
+            ]
+        )
+    )`);
+
+    show_diagram(`draw(900,-1,-1,7,3,
+        let(
+            t, isosceles(),
+            a,t[0],b,t[1],c,t[2],
+            H, projection(c,line(a,b)),
+            [
+                (a..b..c), 
+                (c..h) dashed,
+                h,
+                angle(b,h,c) right,
+                angle(b,a,c) double,
+                angle(c,b,a) double,
+                (a..h) label(),
+                (b..h) label(),
+                (a..c) label() double,
+                (c..b) label() double
+            ]
+        )
+    )`);
+
+    console.log('hay');
+    show_diagram(`draw(900,-1,-1,8,5,
+        let(
+            [a,b,c,d],square(),
+            [a,b,f],equilateral(a,b),
+            [c,b,g],equilateral(c,b),
+            [
+                line(f..g) dashed darkgray,
+                (a..b..c..d),
+                (a..b..f),
+                (c..b..g)
             ]
         )
     )`);

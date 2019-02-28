@@ -306,7 +306,7 @@ class Line extends Object {
         return new Line(O.x,O.y,atan2(u.y,u.x));
     }
     static create_with_segment(s) {
-        const [A,B] = s;
+        const [A,B] = s.points;
         return Line.create_with_points(A,B);
     }
     parallel(O) {
@@ -1431,7 +1431,7 @@ class CanvasDrawer extends Drawer {
         this.min_y = min_y;
         this.max_x = max_x;
         this.max_y = max_y;
-        this.scale = scale;
+        this.scale = scale || 1;
         this.font_scale = 100;
         this.default_dist = 0.2;
         const cscale = this.width/(this.max_x - this.min_x);
@@ -1872,17 +1872,17 @@ class CanvasDrawer extends Drawer {
         for(let p of set.points.slice(1)) {
             ctx.lineTo(p.x,p.y);
         }
-        if(this.local.close) {
-            ctx.closePath();
-        }
     }
 
     draw_polygon(set) {
         const ctx = this.ctx;
         this.check_basic_settings();
         this.polygon(set);
+        if(set.points.length>2 && this.local.arrow==NONE) {
+            ctx.closePath();
+        }
         ctx.stroke();
-        if(!this.local.close && this.local.arrow != NONE && set.points.length>=2) {
+        if(this.local.arrow != NONE && set.points.length>=2) {
             if(this.local.dir==BACK || this.local.arrow==ARROWS) {
                 const [p1,p2] = set.points;
                 this.draw_arrow(p1.x,p1.y,argument(p2,p1),this.SIZE(0.1));
@@ -1897,6 +1897,7 @@ class CanvasDrawer extends Drawer {
         const ctx = this.ctx;
         this.check_basic_settings();
         this.polygon(set);
+        ctx.closePath();
         ctx.fill();
     }
 
