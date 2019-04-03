@@ -201,7 +201,6 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
         )
     )`);
 
-    console.log('hay');
     show_diagram(`draw(900,-1,-1,8,5,
         let(
             [a,b,c,d],square(),
@@ -213,6 +212,21 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
                 (a..b..f),
                 (c..b..g)
             ]
+        )
+    )`);
+    
+    show_diagram(`draw(900,-1,-1,8,5,
+        let(
+            [a,b,c,d],square(),
+            (a..b..c..d) hsl(0,0.5,0.9)
+        ),
+        let(
+            [a,b,c,d],square(point(1,1),point(3,2)),
+            (a..b..c..d) filled hsl(240,0.5,0.75)
+        ),
+        let(
+            [a,b,c,d],square(1),
+            (a..b..c..d) filled hsl(120,0.5,0.75)
         )
     )`);
 });

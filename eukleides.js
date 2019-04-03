@@ -1071,29 +1071,41 @@ class QuadrilateralMaker {
         this.vertices = vertices.slice();
     }
 
-    assign(x,y,u,v,l,m,b,square) {
+    /** Assign the positions of the vertices of a quadrilateral ABCD
+     * @param {Number} x - x-component of vector in direction of first side (A-B)
+     * @param {Number} y - y-component of vector in direction of first side (A-B)
+     * @param {Number} u - x-component of vector in direction of second side (B-C)
+     * @param {Number} v - y-component of vector in direction of second side (B-C)
+     * @param {Number} l - length of first side (A-B)
+     * @param {Number} m - length of second side (B-C)
+     * @param {Boolean} square - is the quadrilateral a square? (i.e., length of second side equals length of first side)
+     * @returns {Array.<Point>} - the vertices A,B,C,D
+     */
+    assign(x,y,u,v,l,m,square) {
         let [A,B,C] = this.vertices;
-        switch(this.vertices.length) {
-            case 0:
-                A = new Point(0,0);
-                B = new Point(l*x,l*y);
-                break;
-            case 1:
-                B = new Point(A.x+l*x, A.y+l*y);
-                break;
-            case 2:
-                l = A.distance(B);
-                if(ZERO(l)) {
-                    throw(new Error("invalid points"));
-                }
-                x = (B.x-A.x)/l;
-                y = (B.y-A.y)/l;
-                break;
+        if(this.vertices.length<3) {
+            switch(this.vertices.length) {
+                case 0:
+                    A = new Point(0,0);
+                    B = new Point(l*x,l*y);
+                    break;
+                case 1:
+                    B = new Point(A.x+l*x, A.y+l*y);
+                    break;
+                case 2:
+                    l = A.distance(B);
+                    if(ZERO(l)) {
+                        throw(new Error("invalid points"));
+                    }
+                    x = (B.x-A.x)/l;
+                    y = (B.y-A.y)/l;
+                    break;
+            }
+            if(square) {
+                m = l;
+            }
+            C = new Point(B.x+m*(u*x-v*y), B.y+m*(v*x+u*y));
         }
-        if(square) {
-            m = l;
-        }
-        C = new Point(B.x+m*(u*x-v*y), B.y+m*(v*x+u*y));
         const D = new Point(
             A.x+C.x-B.x,
             A.y+C.y-B.y
@@ -1114,7 +1126,7 @@ class QuadrilateralMaker {
             v = sin(a);
         }
         const qm = new QuadrilateralMaker(vertices);
-        return qm.assign(x,y,u,v,l,m,b);
+        return qm.assign(x,y,u,v,l,m);
     }
 
     static define_parallelogram_VV(vertices,u,v) {
@@ -1135,7 +1147,7 @@ class QuadrilateralMaker {
             y = sin(b);
         }
         const qm = new QuadrilateralMaker(vertices);
-        return qm.assign(x,y,0,1,l,m,b);
+        return qm.assign(x,y,0,1,l,m);
     }
 
     static define_square(vertices,l,b) {
@@ -1145,7 +1157,7 @@ class QuadrilateralMaker {
             y = sin(b);
         }
         const qm = new QuadrilateralMaker(vertices);
-        return qm.assign(x,y,0,1,l,l,b,true);
+        return qm.assign(x,y,0,1,l,l,true);
     }
 }
 

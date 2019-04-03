@@ -131,6 +131,12 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
 	var TRange = Numbas.jme.types.TRange;
     var THTML = Numbas.jme.types.THTML;
 
+    var sig = Numbas.jme.signature;
+    var spoint = sig.type('eukleides_point');
+    var sangle = sig.type('eukleides_angle');
+    var snum = sig.type('number');
+    var snumorangle = sig.optional(sig.or(snum,sangle));
+
     extension.scope.addFunction(new funcObj('deg',[TNum],TAngle,function(degrees) {
         var rad = Numbas.math.radians(degrees);
         return rad;
@@ -533,7 +539,13 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return new TList(vertices.map(function(v){ return new TPoint(v); }));
     }
 
-    extension.scope.addFunction(new funcObj('triangle',[],TList,null,{
+    var sig_triangle = sig.or(
+        sig.sequence(spoint, spoint, snumorangle, snumorangle, sig.optional(sangle)),
+        sig.sequence(sig.optional(spoint), sig.optional(spoint), sig.optional(
+            sig.sequence(snum, snumorangle, snumorangle, sig.optional(sangle))
+        ))
+    );
+    extension.scope.addFunction(new funcObj('triangle',[sig_triangle],TList,null,{
         evaluate: function(args,scope) {
             var vertices = [];
             // can give up to two vertices
@@ -574,46 +586,16 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                 out = euk.TriangleMaker.define_triangle_SSA(vertices,x,s1.value,s2.value,a);
             }
             return wrap_vertices(out);
-        },
-        typecheck: function(variables) {
-            var num_vertices = 0;
-            // can give up to two vertices
-            for(var i=0;i<2 && i<variables.length && variables[i].type=='eukleides_point';i++) {
-                num_vertices += 1;
-            }
-            // length of first side must be given if fewer than two vertices given
-            if(num_vertices<2) {
-                if(i==variables.length) {
-                    return true;
-                } else if(variables[i].type!='number') {
-                    return false;
-                }
-                i += 1;
-            }
-            // can optionally give the two remaining lengths or angles
-            if(i<variables.length-1) {
-                var a = variables[i];
-                if(a.type!='number' && a.type!='eukleides_angle') {
-                    return false;
-                }
-                var b = variables[i+1];
-                if(b.type!='number' && b.type!='eukleides_angle') {
-                    return false;
-                }
-                i += 2;
-            }
-            // can optionally give the orientation of the first side if fewer than two vertices given
-            if(num_vertices<2 && i<variables.length) {
-                if(variables[i].type!='eukleides_angle') {
-                    return false;
-                }
-                i += 1;
-            }
-            return i==variables.length;
         }
     }));
 
-    extension.scope.addFunction(new funcObj('right',[],TList,null,{
+    var sig_right = sig.or(
+        sig.sequence(spoint, spoint, snumorangle, sig.optional(sangle)),
+        sig.sequence(sig.optional(spoint), sig.optional(spoint), sig.optional(
+            sig.sequence(snum, snumorangle, sig.optional(sangle))
+        ))
+    );
+    extension.scope.addFunction(new funcObj('right',[sig_right],TList,null,{
         evaluate: function(args,scope) {
             var vertices = [];
             // can give up to two vertices
@@ -644,42 +626,16 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                 out = euk.TriangleMaker.define_right_SA(vertices,x,s.value,a);
             }
             return wrap_vertices(out);
-        },
-        typecheck: function(variables) {
-            var num_vertices = 0;
-            // can give up to two vertices
-            for(var i=0;i<2 && i<variables.length && variables[i].type=='eukleides_point';i++) {
-                num_vertices += 1;
-            }
-            // length of first side must be given if fewer than two vertices given
-            if(num_vertices<2) {
-                if(i>=variables.length || variables[i].type!='number') {
-                    return false;
-                }
-                i += 1;
-            }
-            // must give one other length or angle
-            if(i<variables.length) {
-                var a = variables[i];
-                if(a.type!='number' && a.type!='eukleides_angle') {
-                    return false;
-                }
-                i += 1;
-            } else {
-                return false;
-            }
-            // can optionally give the orientation of the first side if fewer than two vertices given
-            if(num_vertices<2 && i<variables.length) {
-                if(variables[i].type!='eukleides_angle') {
-                    return false;
-                }
-                i += 1;
-            }
-            return i==variables.length;
         }
     }));
 
-    extension.scope.addFunction(new funcObj('isosceles',[],TList,null,{
+    var sig_isosceles = sig.or(
+        sig.sequence(spoint, spoint, sig.or(snum,sangle)),
+        sig.sequence(sig.optional(spoint), sig.optional(spoint), sig.optional(
+            sig.sequence(snum, sig.or(snum,sangle), sig.optional(sangle))
+        ))
+    );
+    extension.scope.addFunction(new funcObj('isosceles',[sig_isosceles],TList,null,{
         evaluate: function(args,scope) {
             var vertices = [];
             // can give up to two vertices
@@ -718,44 +674,14 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                 out = euk.TriangleMaker.define_isosceles_SA(vertices,x,s.value,a);
             }
             return wrap_vertices(out);
-        },
-        typecheck: function(variables) {
-            var num_vertices = 0;
-            // can give up to two vertices
-            for(var i=0;i<2 && i<variables.length && variables[i].type=='eukleides_point';i++) {
-                num_vertices += 1;
-            }
-            // length of first side
-            if(num_vertices<2) {
-                if(i==variables.length) {
-                    return true;
-                }
-                if(variables[i].type!='number') {
-                    return false;
-                }
-                i += 1;
-            }
-            // must give one other length or angle
-            if(i<variables.length) {
-                var a = variables[i];
-                if(a.type!='number' && a.type!='eukleides_angle') {
-                    return false;
-                }
-            } else {
-                return false;
-            }
-            // can optionally give the orientation of the first side if fewer than two vertices given
-            if(num_vertices<2 && i<variables.length) {
-                if(variables[i].type!='eukleides_angle') {
-                    return false;
-                }
-                i += 1;
-            }
-            return i==variables.length;
         }
     }));
 
-    extension.scope.addFunction(new funcObj('equilateral',[],TList,null,{
+    var sig_equilateral = sig.or(
+        sig.sequence(spoint, spoint, sig.optional(sangle)),
+        sig.sequence(sig.optional(spoint), sig.optional(spoint), snum, sig.optional(sangle))
+    );
+    extension.scope.addFunction(new funcObj('equilateral',[sig_equilateral],TList,null,{
         evaluate: function(args,scope) {
             var vertices = [];
             // can give up to two vertices
@@ -777,36 +703,19 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             
             var out = euk.TriangleMaker.define_equilateral(vertices,x,a);
             return wrap_vertices(out);
-        },
-        typecheck: function(variables) {
-            var num_vertices = 0;
-            // can give up to two vertices
-            for(var i=0;i<2 && i<variables.length && variables[i].type=='eukleides_point';i++) {
-                num_vertices += 1;
-            }
-            // length of first side must be given if fewer than two vertices given
-            if(num_vertices<2) {
-                if(i>=variables.length || variables[i].type!='number') {
-                    return false;
-                }
-                i += 1;
-            }
-            // can optionally give the orientation of the first side if fewer than two vertices given
-            if(num_vertices<2 && i<variables.length) {
-                if(variables[i].type!='eukleides_angle') {
-                    return false;
-                }
-                i += 1;
-            }
-            return i==variables.length;
         }
     }));
 
-    extension.scope.addFunction(new funcObj('parallelogram',[],TList,null,{
+    var sig_parallelogram = sig.or(
+        sig.sequence(spoint, spoint, spoint),
+        sig.sequence(spoint, spoint, sig.optional(sig.sequence(snum, sangle))),
+        sig.sequence(sig.optional(spoint), sig.optional(sig.sequence(snum, snum, sangle, sig.optional(sangle))))
+    );
+    extension.scope.addFunction(new funcObj('parallelogram',[sig_parallelogram],TList,null,{
         evaluate: function(args,scope) {
             var vertices = [];
             // can give up to three vertices
-            for(var i=0;i<2 && i<args.length && args[i].type=='eukleides_point';i++) {
+            for(var i=0;i<3 && i<args.length && args[i].type=='eukleides_point';i++) {
                 vertices.push(args[i].value);
             }
             if(vertices.length==3) {
@@ -814,73 +723,30 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             }
             var num_vertices = vertices.length;
             var s1 = 5, s2 = 4, an = Math.PI*5/12, a = 0;
-            if(i==args.length) {
-                return wrap_vertices(euk.QuadrilateralMaker.define_parallelogram_SSA(vertices,s1,s2,an,a));
-            }
-            // length of first side must be given if fewer than two vertices given
-            if(num_vertices<2) {
-                s1 = args[i].value;
-                i += 1;
-            }
-            // must give one more side and an angle
-            s2 = args[i].value;
-            san = args[i+1].value;
-            i += 2;
-            // can optionally give the orientation of the first side if fewer than two vertices given
-            if(num_vertices<2 && i<args.length) {
-                a = args[i].value;
-            }
-            return wrap_vertices(euk.QuadrilateralMaker.define_parallelogram_SSA(vertices,s1,s2,an,a));
-        },
-        typecheck: function(variables) {
-            var num_vertices = 0;
-            // can give up to three vertices
-            for(var i=0;i<3 && i<variables.length && variables[i].type=='eukleides_point';i++) {
-                num_vertices += 1;
-            }
-
-            // if three vertices are given, the fourth is fixed
-            if(num_vertices==3) {
-                return i==variables.length;
-            }
-
-            if(i==variables.length) {
-                return true;
-            }
-
-            // length of first side must be given if fewer than two vertices given
-            if(num_vertices<2) {
-                if(i>=variables.length || variables[i].type!='number') {
-                    return false;
+            if(i<args.length) {
+                // length of first side must be given if fewer than two vertices given
+                if(num_vertices<2) {
+                    s1 = args[i].value;
+                    i += 1;
                 }
-                i += 1;
-            }
-            // must give one more length and an angle
-            if(i<variables.length-1) {
-                var a = variables[i];
-                if(a.type!='number') {
-                    return false;
-                }
-                var b = variables[i+1];
-                if(b.type!='eukleides_angle') {
-                    return false;
-                }
+                // must give one more side and an angle
+                s2 = args[i].value;
+                an = args[i+1].value;
                 i += 2;
-            } else {
-                return false;
-            }
-            // can optionally give the orientation of the first side if fewer than two vertices given
-            if(num_vertices<2 && i<variables.length) {
-                if(variables[i].type!='eukleides_angle') {
-                    return false;
+                // can optionally give the orientation of the first side if fewer than two vertices given
+                if(num_vertices<2 && i<args.length) {
+                    a = args[i].value;
                 }
-                i += 1;
             }
-            return i==variables.length;
+            return wrap_vertices(euk.QuadrilateralMaker.define_parallelogram_SSA(vertices,s2,an,s1,a));
         }
     }));
 
-    extension.scope.addFunction(new funcObj('rectangle',[],TList,null,{
+    var sig_rectangle = sig.or(
+        sig.sequence(spoint, spoint, sig.optional(snum)),
+        sig.sequence(sig.optional(spoint), sig.optional(sig.sequence(snum, snum, sig.optional(sangle))))
+    );
+    extension.scope.addFunction(new funcObj('rectangle',[sig_rectangle],TList,null,{
         evaluate: function(args,scope) {
             var vertices = [];
             // can give up to two vertices
@@ -905,47 +771,14 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                 a = args[i].value;
             }
             return wrap_vertices(euk.QuadrilateralMaker.define_rectangle(vertices,s1,s2,a));
-        },
-        typecheck: function(variables) {
-            var num_vertices = 0;
-            // can give up to two vertices
-            for(var i=0;i<2 && i<variables.length && variables[i].type=='eukleides_point';i++) {
-                num_vertices += 1;
-            }
-
-            if(i==variables.length) {
-                return true;
-            }
-
-            // length of first side must be given if fewer than two vertices given
-            if(num_vertices<2) {
-                if(i>=variables.length || variables[i].type!='number') {
-                    return false;
-                }
-                i += 1;
-            }
-            // must give one more length
-            if(i<variables.length) {
-                var a = variables[i];
-                if(a.type!='number') {
-                    return false;
-                }
-                i += 1;
-            } else {
-                return false;
-            }
-            // can optionally give the orientation of the first side if fewer than two vertices given
-            if(num_vertices<2 && i<variables.length) {
-                if(variables[i].type!='eukleides_angle') {
-                    return false;
-                }
-                i += 1;
-            }
-            return i==variables.length;
         }
     }));
 
-    extension.scope.addFunction(new funcObj('square',[],TList,null,{
+    var sig_square = sig.or(
+        sig.sequence(spoint, spoint),
+        sig.sequence(sig.optional(spoint), sig.optional(sig.sequence(snum, sig.optional(sangle))))
+    );
+    extension.scope.addFunction(new funcObj('square',[sig_square],TList,null,{
         evaluate: function(args,scope) {
             var vertices = [];
             // can give up to two vertices
@@ -964,32 +797,6 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                 a = args[i].value;
             }
             return wrap_vertices(euk.QuadrilateralMaker.define_square(vertices,s,a));
-        },
-        typecheck: function(variables) {
-            var num_vertices = 0;
-            // can give up to two vertices
-            for(var i=0;i<2 && i<variables.length && variables[i].type=='eukleides_point';i++) {
-                num_vertices += 1;
-            }
-
-            // length of first side must be given if fewer than two vertices given
-            if(num_vertices<2) {
-                if(i==variables.length) {
-                    return true;
-                }
-                if(variables[i].type!='number') {
-                    return false;
-                }
-                i += 1;
-            }
-            // can optionally give the orientation of the first side if fewer than two vertices given
-            if(num_vertices<2 && i<variables.length) {
-                if(variables[i].type!='eukleides_angle') {
-                    return false;
-                }
-                i += 1;
-            }
-            return i==variables.length;
         }
     }));
 
