@@ -9,25 +9,48 @@ Numbas.queueScript('base',[],function(){});
 Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
     var s = window.s = new Numbas.jme.Scope([Numbas.jme.builtinScope, Numbas.extensions.eukleides.scope]);
 
+    const canvas_size = 900;
+
     function show_diagram(script) {
-        var diagram = s.evaluate(script);
-        var canvas = diagram.value[0];
+        var canvas_diagram = s.evaluate(`draw(${canvas_size},${script})`);
+        var canvas = canvas_diagram.value[0];
         document.body.appendChild(canvas);
+        var svg_diagram = s.evaluate(`draw_svg(${script})`);
+        var svg = svg_diagram.value[0];
+        svg.style['width'] = `${canvas_size}px`;
+        document.body.appendChild(svg);
     }
 
-    show_diagram(`draw(900,
+    show_diagram(`
+        point(1,0),
+        point(1,0) label("A",deg(0)),
+        point(1,0) label("B",deg(45)),
+        point(1,0) label("C",deg(90)),
+        point(1,0) label("D",deg(135)),
+        point(1,0) label("E",deg(180)),
+        point(1,0) label("F",deg(225)),
+        point(1,0) label("G",deg(270)),
+        point(1,0) label("H",deg(315)),
+        point(2,0) disc,
+        point(1,1) box,
+        point(2,1) plus,
+        point(3,0) cross,
+        (point(1,0)..point(2,0)..point(2,1)..point(1,1)) filled red opacity(0.2)
+    `);
+
+    show_diagram(`
         point(0,0) label("A",deg(0)),
         point(2,0) label("B",deg(-90)),
         point(4,0) label("Cooo",deg(45)),
         point(6,0) label("Doop",deg(135)),
         point(6,0) label("Eep",deg(-135)),
+        point(6,0),
         (point(0,0)..point(3,3)) label() simple,
         (point(2,0)..point(4,3)) label() double,
         (point(4,0)..point(5,3)) label() triple
-    )`);
+    `);
     
-
-    show_diagram(`draw(900,
+    show_diagram(`
         let(a,point(1,0), b,point(0,0), c,point(1,1),
            [a..b,b..c,angle(a,b,c)]
         ),
@@ -67,9 +90,9 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
         let(a,point(5,1), b,point(4,1), c,point(5,2),
            [a..b,b..c,angle(a,b,c) back]
         )
-    )`);
+    `);
 
-    show_diagram(`draw(900,
+    show_diagram(`
         point(0,2.5) disc label("A",deg(90)), 
         point(1,2.5) dot, 
         point(2,2.5) cross, 
@@ -129,9 +152,9 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
                 list(intersection(p2,c1))
             ]
         )
-    )`);
+    `);
 
-    show_diagram(`draw(900,
+    show_diagram(`
         let(t,triangle(),
             let(a,t[0],b,t[1],c,t[2],
             let(
@@ -161,9 +184,9 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
                 ]
             )))
         )
-    )`);
+    `);
 
-    show_diagram(`draw(900,
+    show_diagram(`
         let(
             O,point(0,2),
             C1,circle(O,2),
@@ -179,9 +202,9 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
                 A
             ]
         )
-    )`);
+    `);
 
-    show_diagram(`draw(900,-1,-1,7,3,
+    show_diagram(`-1,-1,7,3,
         let(
             t, isosceles(),
             a,t[0],b,t[1],c,t[2],
@@ -199,9 +222,9 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
                 (c..b) label() double
             ]
         )
-    )`);
+    `);
 
-    show_diagram(`draw(900,-1,-1,8,5,
+    show_diagram(`-1,-1,8,5,
         let(
             [a,b,c,d],square(),
             [a,b,f],equilateral(a,b),
@@ -213,9 +236,9 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
                 (c..b..g)
             ]
         )
-    )`);
+    `);
     
-    show_diagram(`draw(900,-1,-1,8,5,
+    show_diagram(`-1,-1,8,5,
         let(
             [a,b,c,d],square(),
             (a..b..c..d) hsl(0,0.5,0.9)
@@ -228,5 +251,5 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
             [a,b,c,d],square(1),
             (a..b..c..d) filled hsl(120,0.5,0.75)
         )
-    )`);
+    `);
 });

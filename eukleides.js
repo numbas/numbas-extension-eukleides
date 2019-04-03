@@ -11,7 +11,7 @@ function EQL(x,y) {
 }
 
 function RTOD(x) {
-    return PI*x/PI;
+    return 180*x/PI;
 }
 function hypot(x,y) {
     return sqrt(x*x+y*y);
@@ -1409,6 +1409,136 @@ function clean_label(text) {
 
 
 class Drawer {
+    constructor() {
+    }
+
+    initialise() {
+        this.restore_default_settings();
+        this.restore_local_settings();
+        this.setup_frame(-2,-2,8,6,1);
+    }
+
+    restore_default_settings() {
+        this.global = {
+            label: false,
+            label_segment: SIMPLE,
+            color: BLACK,
+            size: 1,
+            step: 3,
+            style: FULL,
+            shape: DOT,
+            part: ENTIRE,
+            dir: FORTH,
+            arrow: NONE,
+            font_desc: '',
+            segment: SIMPLE,
+            angle: SIMPLE,
+            dec: NONE,
+            opacity: 1,
+            font_size: 0.2,
+            bold: false,
+            italic: false,
+            font_family: 'serif',
+            close: true
+        }
+    }
+
+    restore_local_settings() {
+        this.local = Object.assign({},this.global);
+    }
+
+    setup_frame(min_x,min_y,max_x,max_y,scale) {
+        this.min_x = min_x;
+        this.min_y = min_y;
+        this.max_x = max_x;
+        this.max_y = max_y;
+        this.scale = scale || 1;
+        this.font_scale = 100;
+        this.default_dist = 0.2;
+    }
+
+    SIZE(x) {
+        return this.local.size*x/this.scale;
+    }
+
+    check_basic_settings() {
+        this.check_color();
+        this.check_size();
+        this.check_style();
+    }
+
+    set_xy(A,B,C,d) {
+        const l1 = B.distance(A);
+        if(ZERO(l1)) {
+            throw(new Error("invalid angle"));
+        }
+        const x1 = d*(A.x-B.x)/l1;
+        const y1 = d*(A.y-B.y)/l1;
+        const l2 = B.distance(C);
+        if(ZERO(l2)) {
+            throw(new Error("invalid angle"));
+        }
+        const x2 = d*(C.x-B.x)/l2;
+        const y2 = d*(C.y-B.y)/l2;
+        return [x1,y1,x2,y2];
+    }
+
+    // distance to the furthest corner of the frame
+    get_max(x,y) {
+        const {min_x,min_y,max_x,max_y} = this;
+        let m = hypot(min_x-x,min_y-y);
+        let l = hypot(max_x-x,min_y-y);
+        if(l>m) {
+            m = l;
+        }
+        l = hypot(max_x-x,max_y-y);
+        if(l>m) {
+            m = l;
+        }
+        l = hypot(min_x-x,max_y-y);
+        if(l>m) {
+            m = l;
+        }
+        return m;
+    }
+
+    draw_hyperbolic_arc(x0,y0,a,b,f,g,c,s) {
+        const e = atan(b/this.get_max(x0,y0));
+        if(f<-e) {
+            this.draw_branch(-PI+e,-e,x0,y0,a,b,f,g,c,s);
+        }
+        if(g>e) {
+            this.draw_branch(e,PI-e,x0,y0,a,b,f,g,c,s);
+        }
+    }
+
+    draw_conic(C) {
+        this.check_basic_settings();
+        if(C instanceof Parabola) {
+            this.draw_parabolic_arc(C.x,C.y,C.a,-PI,PI,cos(C.d),sin(C.d));
+        } else if(C instanceof Ellipse) {
+            this.draw_elliptic_arc(C.x,C.y,C.a,C.b,-PI,PI,cos(C.d),sin(C.d));
+        } else if(C instanceof Hyperbola) {
+            this.draw_hyperbolic_arc(C.x, C.y, C.a, C.b, -PI, PI, cos(C.d), sin(C.d));
+        }
+    }
+
+    draw_conic_arc(C,f,g) {
+        this.check_basic_settings();
+        if(C instanceof Ellipse && f>g) {
+            g += 360;
+        }
+        if(f>=g) {
+            throw(new Error("invalid boundaries"));
+        }
+        if(C instanceof Parabola) {
+            this.draw_parabolic_arc(C.x,C.y,C.a,f,g,cos(C.d),sin(C.d));
+        } else if(C instanceof Ellipse) {
+            this.draw_elliptic_arc(C.x,C.y,C.a,C.b,f,g,cos(C.d),sin(C.d));
+        } else if(C instanceof Hyperbola) {
+            this.draw_hyperbolic_arc(C.x,C.y,C.a,C.b,f,g,cos(C.d),sin(C.d));
+        }
+    }
 }
 
 const labels = ["simple","double","triple"];
@@ -1432,21 +1562,14 @@ class CanvasDrawer extends Drawer {
         this.canvas = canvas;
         this.width = width || 800;
         this.ctx = canvas.getContext('2d');
-        this.restore_default_settings();
-        this.restore_local_settings();
-        this.setup_frame(-2,-2,8,6,1);
+        this.initialise();
     }
 
     setup_frame(min_x,min_y,max_x,max_y,scale) {
-        const ctx = this.ctx;
-        this.min_x = min_x;
-        this.min_y = min_y;
-        this.max_x = max_x;
-        this.max_y = max_y;
-        this.scale = scale || 1;
-        this.font_scale = 100;
-        this.default_dist = 0.2;
+        super.setup_frame(min_x,min_y,max_x,max_y,scale);
+
         const cscale = this.width/(this.max_x - this.min_x);
+        const ctx = this.ctx;
         this.canvas.width = this.width;
         this.canvas.height = cscale*(this.max_y-this.min_y);
         this.canvas.style.width = this.canvas.width+'px';
@@ -1457,39 +1580,6 @@ class CanvasDrawer extends Drawer {
 
         ctx.lineWidth = 0.02;
         ctx.lineJoin = 'round';
-    }
-
-    restore_default_settings() {
-        this.global = {
-            label: false,
-            label_segment: SIMPLE,
-            color: BLACK,
-            size: 1,
-            step: 3,
-            style: FULL,
-            shape: DOT,
-            part: ENTIRE,
-            dir: FORTH,
-            arrow: NONE,
-            font_desc: '',
-            segment: SIMPLE,
-            angle: SIMPLE,
-            dec: NONE,
-            opacity: 1,
-            font_size: 0.2,
-            bold: false,
-            italic: false,
-            font_family: 'serif'
-        }
-    }
-
-    restore_local_settings() {
-        this.local = Object.assign({},this.global);
-    }
-
-
-    SIZE(x) {
-        return this.local.size*x/this.scale;
     }
 
     check_color() {
@@ -1526,12 +1616,6 @@ class CanvasDrawer extends Drawer {
     check_angle_style() {
         const ctx = this.ctx;
         ctx.setLineDash([1,0]);
-    }
-
-    check_basic_settings() {
-        this.check_color();
-        this.check_size();
-        this.check_style();
     }
 
     draw_dot(x,y,r) {
@@ -1781,22 +1865,6 @@ class CanvasDrawer extends Drawer {
         ctx.restore();
     }
 
-    set_xy(A,B,C,d) {
-        const l1 = B.distance(A);
-        if(ZERO(l1)) {
-            throw(new Error("invalid angle"));
-        }
-        const x1 = d*(A.x-B.x)/l1;
-        const y1 = d*(A.y-B.y)/l1;
-        const l2 = B.distance(C);
-        if(ZERO(l2)) {
-            throw(new Error("invalid angle"));
-        }
-        const x2 = d*(C.x-B.x)/l2;
-        const y2 = d*(C.y-B.y)/l2;
-        return [x1,y1,x2,y2];
-    }
-
     label_angle(A,B,C) {
         const ctx = this.ctx;
         this.check_color();
@@ -1869,7 +1937,6 @@ class CanvasDrawer extends Drawer {
                 this.draw_mark(B,r,a,b);
                 [x1,y1,x2,y2] = this.set_xy(A,B,C,r);
                 this.draw_arrow(B.x+x1,B.y+y1, a-acos(0.12/this.scale), 0.1/this.scale);
-                //draw arrow(0.1/scale, a-acos(0.12/scale), B.x+x1, B.y+y1);
                 break;
         }
     }
@@ -1890,7 +1957,7 @@ class CanvasDrawer extends Drawer {
         const ctx = this.ctx;
         this.check_basic_settings();
         this.polygon(set);
-        if(set.points.length>2 && this.local.arrow==NONE) {
+        if(set.points.length>2 && this.local.arrow==NONE && this.local.close) {
             ctx.closePath();
         }
         ctx.stroke();
@@ -2015,25 +2082,6 @@ class CanvasDrawer extends Drawer {
         ctx.fill();
     }
 
-    // distance to the furthest corner of the frame
-    get_max(x,y) {
-        const {min_x,min_y,max_x,max_y} = this;
-        let m = hypot(min_x-x,min_y-y);
-        let l = hypot(max_x-x,min_y-y);
-        if(l>m) {
-            m = l;
-        }
-        l = hypot(max_x-x,max_y-y);
-        if(l>m) {
-            m = l;
-        }
-        l = hypot(min_x-x,max_y-y);
-        if(l>m) {
-            m = l;
-        }
-        return m;
-    }
-
     draw_parabolic_arc(x0,y0,p,f,g,c,s) {
         const ctx = this.ctx;
         const e = acos(p/this.get_max(x0,y0)-1);
@@ -2069,42 +2117,534 @@ class CanvasDrawer extends Drawer {
         ctx.stroke();
     }
 
-    draw_hyperbolic_arc(x0,y0,a,b,f,g,c,s) {
-        const e = atan(b/this.get_max(x0,y0));
-        if(f<-e) {
-            this.draw_branch(-PI+e,-e,x0,y0,a,b,f,g,c,s);
+}
+
+function dp(n) {
+    return parseFloat(n).toFixed(7);
+}
+
+class SVGDrawer extends Drawer {
+    constructor(svg,doc) {
+        super();
+        this.svg = svg;
+        this.initialise();
+        this.doc = doc || document;
+    }
+
+    setup_frame(min_x,min_y,max_x,max_y,scale) {
+        super.setup_frame(min_x,min_y,max_x,max_y,scale);
+
+        this.svg.setAttribute('viewBox',`${dp(min_x)} ${dp(min_y)} ${dp(max_x-min_x)} ${dp(max_y-min_y)}`);
+        this.svg.setAttribute('transform',`scale(${dp(scale)} ${dp(-scale)})`);
+    }
+
+    check_color() { }
+    check_font() { }
+    check_size() { }
+    check_style() { }
+    check_angle_style() { }
+
+
+    set_fill(e) {
+        e.setAttribute('fill',this.local.color);
+        e.setAttribute('stroke','none');
+        e.style.opacity = this.local.opacity;
+    }
+    set_stroke(e) {
+        e.setAttribute('fill','none');
+        e.setAttribute('stroke',this.local.color);
+        e.setAttribute('stroke-width',this.local.size*0.02);
+        e.style.opacity = this.local.opacity;
+    }
+    set_style(e) {
+        let s = '';
+        switch(this.local.style) {
+            case FULL:
+                s = '1 0';
+                break;
+            case DOTTED:
+                const lineWidth = e.getAttribute('stroke-width') || this.local.size*0.02;
+                s = `${dp(lineWidth)} 0.2`;
+                break;
+            case DASHED:
+                s = '0.3 0.2';
+                break;
         }
-        if(g>e) {
-            this.draw_branch(e,PI-e,x0,y0,a,b,f,g,c,s);
+        e.setAttribute('stroke-dasharray',s);
+    }
+    set_font(e) {
+        const size = this.font_scale*this.SIZE(this.local.font_size)/100;
+        e.style['font'] = `${this.local.italic ? 'italic ': ''}${this.local.bold ? 'bold ' : ''}${dp(size)}pt ${this.local.font_family}`;
+    }
+
+    element(name,attr,content) {
+        const e = this.doc.createElementNS('http://www.w3.org/2000/svg',name);
+        if(attr) {
+            for(let [k,v] of Object.entries(attr)) {
+                e.setAttribute(k,v);
+            }
+        }
+        if(content!==undefined) {
+            e.innerHTML = content;
+        }
+        this.svg.appendChild(e);
+        return e;
+    }
+
+    transform(element,def) {
+        var odef = element.getAttribute('transform') || '';
+        element.setAttribute('transform',[odef,def].join(' '));
+        return element;
+    }
+
+    show(element) {
+        this.svg.appendChild(element);
+        return element;
+    }
+    
+    draw_dot(x,y,r) {
+        const c = this.element('circle',{cx: x, cy: y, r: r});
+        this.set_fill(c);
+        return c;
+    }
+
+    arc(x,y,r,a,b) {
+        const d = Math.abs(b-a);
+        if(d>=2*PI) {
+            return this.element('circle',{cx:x,cy:y,r:r});
+        } else {
+            return this.element('path',{d: `M ${dp(x+Math.cos(a)*r)} ${dp(y+Math.sin(a)*r)} A ${dp(r)} ${dp(r)} 0 ${d>=PI ? 1 : 0} ${a<0 ? 0 : 1} ${dp(x+Math.cos(b)*r)} ${dp(y+Math.sin(b)*r)}`});
         }
     }
 
-    draw_conic(C) {
-        this.check_basic_settings();
-        if(C instanceof Parabola) {
-            this.draw_parabolic_arc(C.x,C.y,C.a,-PI,PI,cos(C.d),sin(C.d));
-        } else if(C instanceof Ellipse) {
-            this.draw_elliptic_arc(C.x,C.y,C.a,C.b,-PI,PI,cos(C.d),sin(C.d));
-        } else if(C instanceof Hyperbola) {
-            this.draw_hyperbolic_arc(C.x, C.y, C.a, C.b, -PI, PI, cos(C.d), sin(C.d));
+    draw_dash(x,y,angle,a,b) {
+        const e = this.transform(
+            this.element('path',{d: `M ${dp(a)} 0 L ${dp(b)} 0`}), 
+            `translate(${dp(x)} ${dp(y)}) rotate(${dp(RTOD(angle))})`
+        );
+        this.set_stroke(e);
+        return e;
+    }
+
+    draw_double_dot(x,y,angle,t,d,r) {
+        const g = this.transform(this.element('g'),`translate(${dp(x)} ${dp(y)}) rotate(${dp(RTOD(angle))})`);
+        for(let i=0;i<2;i++) {
+            const dot = this.transform(this.draw_dot(d,0,r), `rotate(${dp(RTOD(i*t))})`);
+            g.appendChild(dot);
+        }
+        return g;
+    }
+
+    draw_double_dash(x,y,angle,a,b,t) {
+        const g = this.transform(this.element('g'),`translate(${dp(x)} ${dp(y)}) rotate(${dp(RTOD(angle))})`);
+        for(let i=0;i<2;i++) {
+            const p = this.transform(this.element('path',{d:`M ${dp(a)} 0 L ${dp(b)} 0`}), `rotate(${dp(RTOD(i*t))})`);
+            g.appendChild(p);
+        }
+        this.set_stroke(g);
+        return g;
+    }
+
+    draw_double_arc(x,y,r1,r2,a,b) {
+        const g = this.element('g');
+        g.appendChild(this.arc(x,y,r1,a,b));
+        g.appendChild(this.arc(x,y,r2,a,b));
+        this.set_stroke(g);
+        return g;
+    }
+
+    draw_triple_dot(x,y,angle,t,d,r) {
+        const g = this.transform(this.element('g'),`translate(${dp(x)} ${dp(y)}) rotate(${dp(RTOD(angle))})`);
+        for(let i=0;i<2;i++) {
+            const dot = this.transform(this.draw_dot(d,0,r), `rotate(${dp(RTOD(i*t))})`);
+            g.appendChild(dot);
+        }
+        g.appendChild(this.transform(this.draw_dot(d*.75,0,r),`rotate(${dp(RTOD(t*0.5))})`));
+        return g;
+    }
+
+    draw_triple_dash(x,y,angle,a,b,t) {
+        const g = this.transform(this.element('g'),`translate(${dp(x)} ${dp(y)}) rotate(${dp(RTOD(angle))})`);
+        for(let i=0;i<3;i++) {
+            const p = this.transform(this.element('path',{d:`M ${dp(a)} 0 L ${dp(b)} 0`}), `rotate(${dp(RTOD(i*t))})`);
+            g.appendChild(p);
+        }
+        this.set_stroke(g);
+        return g;
+    }
+
+    draw_triple_arc(x,y,r1,r2,r3,a,b) {
+        const g = this.element('g');
+        g.appendChild(this.arc(x,y,r1,a,b));
+        g.appendChild(this.arc(x,y,r2,a,b));
+        g.appendChild(this.arc(x,y,r3,a,b));
+        this.set_stroke(g);
+        return g;
+    }
+
+    draw_point(A) {
+        const size = this.SIZE(0.05);
+        this.check_color();
+
+        switch(this.local.shape) {
+            case DOT:
+                return this.draw_dot(A.x,A.y,size);
+            case DISC:
+                const disc = this.arc(A.x,A.y,size,0,2*PI);
+                this.set_stroke(disc);
+                return disc;
+            case BOX:
+                const r = this.element('rect',{x:A.x-size, y:A.y-size, width: 2*size, height: 2*size});
+                this.set_fill(r);
+                return r;
+            case PLUS:
+                const plus = this.element('path',{
+                    d: `M ${dp(A.x-size)} ${dp(A.y)} l ${dp(2*size)} 0 M ${dp(A.x)} ${dp(A.y-size)} l 0 ${dp(2*size)}`
+                });
+                this.set_stroke(plus);
+                return plus;
+            case CROSS:
+                const cross = this.element('path',{
+                    d: `M ${dp(A.x-size)} ${dp(A.y-size)} l ${dp(2*size)} ${dp(2*size)} M ${dp(A.x-size)} ${dp(A.y+size)} l ${dp(2*size)} ${dp(-2*size)}`
+                });
+                this.set_stroke(cross);
+                return cross;
+            default:
+                console.error("no style");
         }
     }
 
-    draw_conic_arc(C,f,g) {
-        this.check_basic_settings();
-        if(C instanceof Ellipse && f>g) {
-            g += 360;
+    draw_text(text,x,y) {
+        const e = this.element('text',{x:x,y:-y,'dominant-baseline': 'central',transform:`scale(1,-1)`},clean_label(text));
+        this.set_font(e);
+        this.set_fill(e);
+        return e;
+    }
+
+    label_point(A) {
+        const text = this.local.label_text;
+        let angle = this.local.label_direction;
+        if(angle>PI) {
+            angle -= 2*PI;
         }
-        if(f>=g) {
-            throw(new Error("invalid boundaries"));
+        if(angle<-PI) {
+            angle += 2*PI;
         }
-        if(C instanceof Parabola) {
-            this.draw_parabolic_arc(C.x,C.y,C.a,f,g,cos(C.d),sin(C.d));
-        } else if(C instanceof Ellipse) {
-            this.draw_elliptic_arc(C.x,C.y,C.a,C.b,f,g,cos(C.d),sin(C.d));
-        } else if(C instanceof Hyperbola) {
-            this.draw_hyperbolic_arc(C.x,C.y,C.a,C.b,f,g,cos(C.d),sin(C.d));
+        const dist = this.SIZE(this.default_dist);
+        const x = A.x+dist*cos(angle);
+        const y = A.y+dist*sin(angle);
+        const e = this.draw_text(text,x,y);
+        let textAlign = 'start';
+        let dy = '0';
+        if(angle>=3*PI/4 || angle<=-3*PI/4) {
+            textAlign = 'end';
+        } else if(angle>PI/4 || angle<-PI/4) {
+            textAlign = 'middle';
+            if(angle>PI/4) {
+                dy = '-0.5em';
+            } else {
+                dy = '0.5em';
+            }
         }
+        e.setAttribute('dy',dy);
+        e.setAttribute('text-anchor',textAlign);
+        return e;
+    }
+
+    label_segment(A,B) {
+        const size = this.SIZE(0.1);
+
+        const angle = argument(A,B);
+        const x = (A.x+B.x)/2;
+        const y = (A.y+B.y)/2;
+
+        const e = this.transform(this.element('path'), `translate(${dp(x)} ${dp(y)}) scale(${dp(size)}) rotate(${dp(RTOD(angle))})`);
+        this.set_stroke(e);
+        e.setAttribute('stroke-width',e.getAttribute('stroke-width')/size);
+        this.set_style(e);
+        let d;
+        switch(this.local.label_segment) {
+            case SIMPLE: 
+                d = `M -0.5 -1 L 0.5 1`;
+                break;
+            case DOUBLE:
+                d = `M -1 -1 L 0 1 M 0 -1 L 1 1`;
+                break;
+            case TRIPLE:
+                d = `M -1.5 -1 L -0.5 1 M -0.5 -1 L 0.5 1 M 0.5 -1 L 1.5 1`;
+                break;
+        }
+        e.setAttribute('d',d);
+        return e;
+    }
+
+    draw_mark(B,r,a,b) {
+        const e = this.arc(B.x,B.y,r,a,b);
+        this.set_stroke(e);
+        return e;
+    }
+
+    draw_arrow(x,y,angle,size) {
+        const p = this.transform(
+            this.element('path',{d:`M -2 1 L 0.0362998 0.0803779 A 0.088194 0.088194 0 0 0 0.0362998 -0.0803779 L -2 -1 L -1 0 z`}),
+            `translate(${dp(x)} ${dp(y)}) rotate(${dp(RTOD(angle))}) scale(${dp(size)})`
+        );
+        this.set_fill(p);
+        return p;
+    }
+
+    label_angle(A,B,C) {
+        const a = argument(B,A);
+        const b = argument(B,C);
+        const r = this.SIZE(0.5);
+        const s = 0.08/this.scale;
+        let x1,y1,x2,y2;
+        const t = (8*PI/180)/this.local.size;
+        const g = this.element('g');
+        switch(this.local.angle) {
+            case SIMPLE:
+                this.draw_mark(B,r,a,b);
+                switch(this.local.dec) {
+                    case DOTTED:
+                        [x1,y1,x2,y2] = this.set_xy(A,B,C,this.SIZE(Math.sqrt(2)/8));
+                        g.appendChild(this.draw_dot(B.x+x1+x2,B.y+y1+y2,this.SIZE(0.05)));
+                        break;
+                    case DASHED:
+                        g.appendChild(this.draw_dash(B.x,B.y,(a+b)/2,r-s,r+s));
+                        break;
+                }
+                break;
+            case DOUBLE:
+                switch(this.local.dec) {
+                    case DASHED:
+                        g.appendChild(this.draw_mark(B,r,a,b));
+                        g.appendChild(this.draw_double_dash(B.x,B.y,(a+b)/2-t/2,r+s,r-s,t));
+                        break;
+                    case DOTTED:
+                        g.appendChild(this.draw_mark(B,r,a,b));
+                        g.appendChild(this.draw_double_dot(B.x,B.y,(a+b)/2-t,t*2,r*0.75,0.03));
+                        break;
+                    default:
+                        g.appendChild(this.draw_double_arc(B.x,B.y,r-s/2,r+s/2,a,b));
+                }
+                break;
+            case TRIPLE:
+                switch(this.local.dec) {
+                    case DASHED:
+                        g.appendChild(this.draw_mark(B,r,a,b));
+                        g.appendChild(this.draw_triple_dash(B.x,B.y,(a+b)/2-t,r+s,r-s,t));
+                        break;
+                    case DOTTED:
+                        g.appendChild(this.draw_mark(B,r,a,b));
+                        g.appendChild(this.draw_triple_dot(B.x,B.y,(a+b)/2-t,t*2,r*0.75,0.03));
+                        break;
+                    default:
+                        g.appendChild(this.draw_triple_arc(B.x,B.y,r-s,r,r+s,a,b));
+                        break;
+                }
+                break;
+            case RIGHT:
+                [x1,y1,x2,y2] = this.set_xy(A,B,C,this.SIZE(0.35));
+                const p = this.element('path',{d:`M ${dp(B.x+x1)} ${dp(B.y+y1)} l ${dp(x2)} ${dp(y2)} l ${dp(-x1)} ${dp(-y1)}`});
+                this.set_stroke(p);
+                g.appendChild(p);
+                if(this.local.dec==DOTTED) {
+                    g.appendChild(this.draw_dot(B.x+(x1+x2)/2,B.y+(y1+y2)/2,this.SIZE(0.05)));
+                }
+                break;
+            case FORTH:
+                this.draw_mark(B,r,a,b);
+                [x1,y1,x2,y2] = this.set_xy(A,B,C,r);
+                g.appendChild(this.draw_arrow(B.x+x2,B.y+y2, b+acos(0.12/this.scale), 0.1/this.scale));
+                break;
+            case BACK:
+                this.draw_mark(B,r,a,b);
+                [x1,y1,x2,y2] = this.set_xy(A,B,C,r);
+                g.appendChild(this.draw_arrow(B.x+x1,B.y+y1, a-acos(0.12/this.scale), 0.1/this.scale));
+                break;
+        }
+        return g;
+    }
+
+    polygon(set,closed) {
+        const p = this.element('path');
+        let ds = [`M ${dp(set.points[0].x)} ${dp(set.points[0].y)}`];
+        for(let p of set.points.slice(1)) {
+            ds.push(`L ${dp(p.x)} ${dp(p.y)}`);
+        }
+        if(closed) {
+            ds.push('z');
+        }
+        p.setAttribute('d',ds.join(' '));
+        return p;
+    }
+
+    draw_polygon(set) {
+        const p = this.polygon(set, set.points.length>2 && this.local.arrow==NONE && this.local.close);
+        this.set_stroke(p);
+        this.set_style(p);
+        if(this.local.arrow != NONE && set.points.length>=2) {
+            const g = this.element('g');
+            g.appendChild(p);
+            if(this.local.dir==BACK || this.local.arrow==ARROWS) {
+                const [p1,p2] = set.points;
+                g.appendChild(this.draw_arrow(p1.x,p1.y,argument(p2,p1),this.SIZE(0.1)));
+            }
+            if(this.local.dir==FORTH || this.local.arrow==ARROWS) {
+                const [p3,p4] = [set.points[set.points.length-2], set.points[set.points.length-1]];
+                g.appendChild(this.draw_arrow(p4.x,p4.y,argument(p3,p4),this.SIZE(0.1)));
+            }
+            return g;
+        } else {
+            return p;
+        }
+    }
+
+    fill_polygon(set) {
+        const p = this.polygon(set,true);
+        this.set_fill(p);
+        return p;
+    }
+
+    draw_line(l) {
+        let m_x=this.min_x, m_y = this.min_y, M_x = this.max_x, M_y = this.max_y;
+        if(this.local.part==HALF) {
+            if((this.local.dir==FORTH && (l.a> -PI/2 && l.a <= PI/2)) || (this.local.dir==BACK && (l.a<= -PI/2 || l.a > PI/2))) {
+                m_x = l.x;
+            } else {
+                M_x = l.x;
+            }
+            if((this.local.dir == FORTH && l.a > 0) || (this.local.dir == BACK && l.a<=0)) {
+                m_y = l.y;
+            } else {
+                M_y = l.y;
+            }
+        }
+        const x = [0,0];
+        const y = [0,0];
+        let i = 0;
+        if(l.a==PI/2 || l.a==-PI/2) {
+            if(l.x >= m_x && l.x <= M_x) {
+                x[0] = x[1] = l.x;
+                y[0] = m_y;
+                y[1] = M_y;
+                i = 2;
+            }
+        } else if(l.a==0 || l.a==PI) {
+            if(l.y >= m_y && l.y <= M_y) {
+                y[0] = y[1] = l.y;
+                x[0] = m_x;
+                x[1] = M_x;
+                i = 2;
+            }
+        } else {
+            const t = tan(l.a);
+            let z = t*(m_x-l.x)+l.y;
+            if(z >= m_y && z <= M_y) {
+                x[i] = m_x;
+                y[i] = z;
+                i += 1;
+            }
+            z = t*(M_x-l.x)+l.y;
+            if(z >= m_y && z<= M_y) {
+                x[i] = M_x;
+                y[i] = z;
+                i += 1;
+            }
+            z = (m_y-l.y)/t+l.x;
+            if(z >= m_x && z<= M_x && i<2) {
+                x[i] = z;
+                y[i] = m_y;
+                i += 1;
+            }
+            z = (M_y-l.y)/t+l.x;
+            if(z >= m_x && z<= M_x && i<2) {
+                x[i] = z;
+                y[i] = M_y;
+                i += 1;
+            }
+        }
+        if(i==2) {
+            const p = this.element('line',{x1:x[0],y1:y[0],x2:x[1],y2:y[1]});
+            this.set_stroke(p);
+            this.set_style(p);
+            return p;
+        }
+
+    }
+
+    draw_circle(c) {
+        const e = this.element('circle',{cx:c.x,cy:c.y,r:c.r});
+        this.set_stroke(e);
+        this.set_style(e);
+        return e;
+    }
+
+    draw_arc(c,a,b) {
+        const arc = this.arc(c.x,c.y,c.r,a,b);
+        this.set_stroke(arc);
+        this.set_style(arc);
+        if(this.local.arrow!=NONE) {
+            const g = this.element('g');
+            g.appendChild(arc);
+            const d = acos(this.SIZE(.06)/c.r);
+            if(this.local.dir == BACK || this.local.arrow == ARROWS) {
+                g.appendChild(this.draw_arrow(c.x+c.r*cos(a), c.y+c.r*sin(a), a-d, this.SIZE(0.1)));
+            }
+            if(this.local.dir == FORTH || this.local.arrow == ARROWS) {
+                g.appendChild(this.draw_arrow(c.x+c.r*cos(b), c.y+c.r*sin(b), b+d, this.SIZE(0.1)));
+            }
+            return g;
+        } else {
+            return arc;
+        }
+    }
+
+    fill_circle(c) {
+        const e = this.element('circle',{cx:c.x,cy:c.y,r:c.r});
+        this.set_fill(e);
+        return e;
+    }
+
+    draw_parabolic_arc(x0,y0,p,f,g,c,s) {
+        const e = acos(p/this.get_max(x0,y0)-1);
+        f = Math.max(f,-e);
+        g = Math.min(g,e);
+        const ds = [];
+        for(let t=f, n=1; t<=g; t+=this.local.step*PI/180, n++) {
+            const [x,y] = parametric_parabola(t,x0,y0,p,c,s);
+            ds.push(n==1 ? `M ${x} ${y}` : `L ${x} ${y}`);
+        }
+        const path = this.element('path',{d:ds.join(' ')});
+        this.set_stroke(path);
+        this.set_style(path);
+        return path;
+    }
+
+    draw_elliptic_arc(x0,y0,a,b,f,g,c,s) {
+        const ds = [];
+        for(let t=f,n=1; t<=g; t+= this.local.step*PI/180, n++) {
+            const [x,y] = parametric_ellipse(t,x0,y0,a,b,c,s);
+            ds.push(n==1 ? `M ${x} ${y}` : `L ${x} ${y}`);
+        }
+        const path = this.element('path',{d:ds.join(' ')});
+        this.set_stroke(path);
+        this.set_style(path);
+        return path;
+    }
+
+    draw_branch(i,j,x0,y0,a,b,f,g,c,s) {
+        i = Math.max(i,f);
+        j = Math.min(j,g);
+        const ds = [];
+        for(let t=i,n=1; t<=j; t+=this.local.step*PI/180, n++) {
+            const [x,y] = parametric_hyperbola(t,x0,y0,a,b,c,s);
+            ds.push(n==1 ? `M ${x} ${y}` : `L ${x} ${y}`);
+        }
+        const path = this.element('path',{d:ds.join(' ')});
+        this.set_stroke(path);
+        this.set_style(path);
+        return path;
     }
 }
 
@@ -2115,6 +2655,6 @@ export {
     line_circle_intersection, line_conic_intersection, sets_intersection, circles_intersection,
     circle_set_intersection,
     TriangleMaker, QuadrilateralMaker,
-    Drawer, CanvasDrawer,
+    Drawer, CanvasDrawer, SVGDrawer,
     labels, styles, shapes, parts, dirs, arrows, colors
 };

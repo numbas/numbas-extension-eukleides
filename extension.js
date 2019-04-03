@@ -980,6 +980,31 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         }
     }));
 
+    extension.scope.addFunction(new funcObj('draw_svg',[TNum,TNum,TNum,TNum,'*?'],THTML,null,{
+        evaluate: function(args,scope) {
+            var min_x = args[0].value;
+            var min_y = args[1].value;
+            var max_x = args[2].value;
+            var max_y = args[3].value;
+            var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+            var drawer = new euk.SVGDrawer(svg,document);
+            drawer.setup_frame(min_x,min_y,max_x,max_y,1);
+            var drawing = new TDrawing(args.slice(4));
+            draw_drawing(drawer,drawing.value);
+            return new THTML(svg);
+        }
+    }));
+
+    extension.scope.addFunction(new funcObj('draw_svg',['*?'],THTML,null,{
+        evaluate: function(args,scope) {
+            var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+            var drawer = new euk.SVGDrawer(svg,document);
+            var drawing = new TDrawing(args);
+            draw_drawing(drawer,drawing.value);
+            return new THTML(svg);
+        }
+    }));
+
     /*
     extension.scope.addFunction(new funcObj('',[],,function() {
     }));
