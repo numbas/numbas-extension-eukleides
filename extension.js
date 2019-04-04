@@ -1,5 +1,8 @@
 Numbas.addExtension('eukleides',['math','jme'], function(extension) {
 
+    var math = Numbas.math;
+    var jme = Numbas.jme;
+
     /** Wrapper to convert Numbas vector (list of numbers) to Eukleides Vector object
      */
     function vec(vector) {
@@ -12,56 +15,61 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return [vector.x,vector.y];
     }
 
-	var TAngle = Numbas.jme.types.eukleides_angle = Numbas.jme.types.eukleides_TAngle= function(angle) {
+
+	var TAngle = function(angle) {
 		this.value = angle;
 	};
-	TAngle.prototype.type = 'eukleides_angle';
+    jme.registerType(TAngle,'eukleides_angle');
 
-	var TPoint = Numbas.jme.types.eukleides_point = Numbas.jme.types.eukleides_TPoint= function(point) {
+	var TPoint = function(point) {
 		this.value = point;
 	};
-	TPoint.prototype.type = 'eukleides_point';
+    jme.registerType(TPoint,'eukleides_point');
 
-	var TLine = Numbas.jme.types.eukleides_line = Numbas.jme.types.eukleides_TLine= function(line) {
+	var TLine = function(line) {
 		this.value = line;
 	};
-	TLine.prototype.type = 'eukleides_line';
+    jme.registerType(TLine,'eukleides_line');
 
-	var TPointSet = Numbas.jme.types.eukleides_point_set = Numbas.jme.types.eukleides_TPointSet= function(point_set) {
+	var TPointSet = function(point_set) {
 		this.value = point_set;
 	};
-	TPointSet.prototype.type = 'eukleides_point_set';
+    jme.registerType(TPointSet,'eukleides_point_set',{
+        'list': function(s) {
+            return new TList(s.value);
+        }
+    });
 
-	var TCircle = Numbas.jme.types.eukleides_circle = Numbas.jme.types.eukleides_TCircle= function(circle) {
+	var TCircle = function(circle) {
 		this.value = circle;
 	};
-	TCircle.prototype.type = 'eukleides_circle';
+    jme.registerType(TCircle,'eukleides_circle');
 
-	var TConic = Numbas.jme.types.eukleides_conic = Numbas.jme.types.eukleides_TConic= function(conic) {
+	var TConic = function(conic) {
 		this.value = conic;
 	};
-	TConic.prototype.type = 'eukleides_conic';
+    jme.registerType(TConic,'eukleides_conic');
 
-	var TDrawing = Numbas.jme.types.eukleides_drawing = Numbas.jme.types.eukleides_TDrawing = function(objects,style) {
+	var TDrawing = function(objects,style) {
         this.value = {
             objects: objects || [],
             style: style || {}
         };
 	};
-	TDrawing.prototype.type = 'eukleides_drawing';
+    jme.registerType(TDrawing,'eukleides_drawing');
 
-	var TLabel = Numbas.jme.types.eukleides_label = Numbas.jme.types.eukleides_TLabel= function(object,style) {
+	var TLabel = function(object,style) {
         this.object = object;
 		this.style = style;
 	};
-	TLabel.prototype.type = 'eukleides_label';
+    jme.registerType(TLabel,'eukleides_label');
 
-	var TAngleLabel = Numbas.jme.types.eukleides_angle_label = Numbas.jme.types.eukleides_TAngleLabel = function(a,b,c) {
+	var TAngleLabel = function(a,b,c) {
         this.a = a;
         this.b = b;
         this.c = c;
 	};
-	TAngleLabel.prototype.type = 'eukleides_angle_label';
+    jme.registerType(TAngleLabel,'eukleides_angle_label');
 
     function draw_drawing(drawer,drawing) {
         var ostyle = drawer.local;
@@ -116,7 +124,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                     drawer.label_angle(obj.a,obj.b,obj.c);
                     break;
                 default:
-                    console.log('unknown object type: '+obj.type);
+                    throw(new Numbas.Error('Eukleides trying to draw unknown object type: '+obj.type));
             }
         });
         drawer.local = ostyle;
@@ -137,403 +145,392 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
     var snum = sig.type('number');
     var snumorangle = sig.optional(sig.or(snum,sangle));
 
+    extension.scope.setVariable('O',new TPoint(new euk.Point(0,0)));
+
+    extension.scope.addFunction(new funcObj('+',[TAngle,TAngle],TAngle,math.add),
+    {description: 'Add two angles'});
     extension.scope.addFunction(new funcObj('deg',[TNum],TAngle,function(degrees) {
-        var rad = Numbas.math.radians(degrees);
+        var rad = math.radians(degrees);
         return rad;
-    }));
+    },{description: 'Construct an angle in degrees'}));
 
     extension.scope.addFunction(new funcObj('rad',[TNum],TAngle,function(radians) {
         return radians;
-    }));
+    },{description: 'Construct an angle in radians'}));
 
     extension.scope.addFunction(new funcObj('point',[TNum,TNum],TPoint,function(x,y) {
         return new euk.Point(x,y);
-    }));
+    },{description: 'A point at the given coordinates'}));
 
-    extension.scope.addFunction(new funcObj('polar',[TNum,TAngle],TPoint,function(r,a) {
+    extension.scope.addFunction(new funcObj('point',[TNum,TAngle],TPoint,function(r,a) {
         return euk.Point.create_polar(r,a);
-    }));
+    },{description: 'A point at the given polar coordinates'}));
 
     extension.scope.addFunction(new funcObj('point',[TPointSet,TNum],TPoint,function(set,t) {
         return euk.Point.create_point_on_segment(set,t);
-    }));
+    },{description: 'A point along the first edge of the given polygon'}));
 
     extension.scope.addFunction(new funcObj('point',[TLine,TNum],TPoint,function(line,t) {
         return euk.Point.create_point_on_line(line,t);
-    }));
+    },{description:'A point on the given line, the given distance away from its origin'}));
 
     extension.scope.addFunction(new funcObj('point_with_abscissa',[TLine,TNum],TPoint,function(line,x) {
         return euk.Point.create_point_with_abscissa(line,x);
-    }));
+    },{description:'A point on the given line with the given abscissa, with respect to the implicit coordinate system'}));
 
     extension.scope.addFunction(new funcObj('point_with_ordinate',[TLine,TNum],TPoint,function(line,y) {
         return euk.Point.create_point_with_ordinate(line,y);
-    }));
+    },{description:'A point on the given line with the given ordinate, with respect to the implicit coordinate system'}));
 
     extension.scope.addFunction(new funcObj('point',[TCircle,TAngle],TPoint,function(circle,a) {
         return euk.Point.create_point_on_circle(circle,a);
-    }));
+    },{description:'A point on the given circle at the given angle'}));
 
     extension.scope.addFunction(new funcObj('midpoint',[TPointSet],TPoint,function(set) {
         return euk.Point.create_midpoint(set);
-    }));
+    },{description:'The midpoint of the given segment'}));
 
     extension.scope.addFunction(new funcObj('barycenter',[TPointSet,TList],TPoint,function(points,weights) {
         return euk.Point.create_barycenter(points,weights);
-    },{unwrapValues: true}));
+    },{unwrapValues: true},{description:'The barycenter of the given polygon'}));
 
     extension.scope.addFunction(new funcObj('orthocenter',[TPoint,TPoint,TPoint],TPoint,function(A,B,C) {
         return euk.Point.create_orthocenter(A,B,C);
-    }));
+    },{description:'The orthocenter of the given polygon'}));
 
     extension.scope.addFunction(new funcObj('+',[TPoint,TVector],TPoint,function(p,u) {
         return p.translate(vec(u));
-    }));
+    },{description:'Translate a point by a vector'}));
 
     extension.scope.addFunction(new funcObj('-',[TPoint,TVector],TPoint,function(p,u) {
         return p.translate(vec(Numbas.vectormath.negate(u)));
-    }));
+    },{description:'Translate a point by the opposite of a vector'}));
 
     extension.scope.addFunction(new funcObj('reflect',[TPoint,TLine],TPoint,function(p,l) {
         return p.reflect(l);
-    }));
+    },{description:'Reflect a point in a line'}));
 
     extension.scope.addFunction(new funcObj('symmetric',[TPoint,TPoint],TPoint,function(p,origin) {
         return p.symmetric(origin);
-    }));
+    },{description:'180° rotation of the first point around the second'}));
 
     extension.scope.addFunction(new funcObj('rotate',[TPoint,TPoint,TAngle],TPoint,function(p,origin,angle) {
         return p.rotate(angle,origin);
-    }));
+    },{description:'Rotate the first point the given angle around the second'}));
 
     extension.scope.addFunction(new funcObj('distance',[TPoint,TPoint],TNum,function(a,b) {
         return a.distance(b);
-    }));
+    },{description:'Distance between two points'}));
 
     extension.scope.addFunction(new funcObj('homothetic',[TPoint,TPoint,TNum],TPoint,function(p,origin,k) {
         return p.homothetic(origin,k);
-    }));
+    },{description:'Homothecy (reduction or dilation) of the first point with respect to the second, and the given scale'}));
 
     extension.scope.addFunction(new funcObj('x',[TPoint],TNum,function(p) {
         return p.abscissa();
-    }));
+    },{description:'x coordinate of a point'}));
 
     extension.scope.addFunction(new funcObj('y',[TPoint],TNum,function(p) {
         return p.ordinate();
-    }));
+    },{description:'y coordinate of a point'}));
 
     extension.scope.addFunction(new funcObj('-',[TPoint,TPoint],TVector,function(a,b) {
         return unvec(euk.Vector.create_from_points(a,b));
-    }));
+    },{description:'Vector from the first point\'s position to the second\'s'}));
 
     extension.scope.addFunction(new funcObj('vector',[TPointSet],TVector,function(set) {
         return unvec(euk.Vector.create_from_segment(set));
-    }));
+    },{description:'Vector from the first point of the polygon to the second'}));
 
     extension.scope.addFunction(new funcObj('vector',[TLine],TVector,function(line) {
         return unvec(euk.Vector.create_from_line(line));
-    }));
+    },{description:'Vector in the direction of the given line'}));
 
     extension.scope.addFunction(new funcObj('rotate',[TVector,TAngle],TVector,function(v,a) {
         return unvec(vec(c).rotate(a));
-    }));
+    },{description:'Rotate a vector by the given angle'}));
 
     extension.scope.addFunction(new funcObj('argument',[TVector],TAngle,function(v) {
         return vec(v).argument();
-    }));
+    },{description:'Direction of the given vector'}));
 
     extension.scope.addFunction(new funcObj('angle_between',[TVector,TVector],TAngle,function(u,v) {
         return euk.Vector.angle_between(vec(u),vec(v));
-    }));
+    },{description:'Angle between two vectors'}));
 
     extension.scope.addFunction(new funcObj('line',[TPoint,TAngle],TLine,function(origin,angle) {
         return new euk.Line(origin.x,origin.y,angle);
-    }));
+    },{description:'A line with the given origin and direction'}));
 
     extension.scope.addFunction(new funcObj('line',[TPoint,TPoint],TLine,function(A,B) {
         return euk.Line.create_with_points(A,B);
-    }));
+    },{description:'A line containing the two given points'}));
 
     extension.scope.addFunction(new funcObj('line',[TPoint,TVector],TLine,function(origin,u) {
         return euk.Line.create_with_vector(origin,vec(u));
-    }));
+    },{description:'A line with the given origin and direction vector'}));
 
     extension.scope.addFunction(new funcObj('line',[TPointSet],TLine,function(set) {
         return euk.Line.create_with_segment(set);
-    }));
+    },{description:'A line containing the given segment'}));
 
     extension.scope.addFunction(new funcObj('parallel',[TLine,TPoint],TLine,function(line,p) {
         return line.parallel(p);
-    }));
+    },{description:'A line parallel to the given line and containing the given point'}));
 
     extension.scope.addFunction(new funcObj('parallel',[TPointSet,TPoint],TLine,function(set,p) {
         return euk.Line.create_parallel_to_segment(set,p);
-    }));
+    },{description:'A line parallel to the given segment and containing the given point'}));
 
     extension.scope.addFunction(new funcObj('perpendicular',[TLine,TPoint],TLine,function(line,p) {
         return line.perpendicular(p);
-    }));
+    },{description:'A line perpendicular to the given line and containing the given point'}));
 
     extension.scope.addFunction(new funcObj('bisector',[TPoint,TPoint,TPoint],TLine,function(A,B,C) {
         return euk.Line.create_angle_bisector(A,B,C);
-    }));
+    },{description:'The bisector of the angle formed by the given points, and containing the second'}));
 
     extension.scope.addFunction(new funcObj('bisector',[TLine,TLine],TLine,function(l1,l2) {
         return euk.Line.create_lines_bisector(l1,l2);
-    }));
+    },{description:'The bisector of the two given lines'}));
 
     extension.scope.addFunction(new funcObj('altitude',[TPoint,TPoint,TPoint],TLine,function(A,B,C) {
         return euk.Line.create_altitude(A,B,C);
-    }));
+    },{description:'The line containing the first point and perpendicular to the segment between the second and third'}));
 
     extension.scope.addFunction(new funcObj('median',[TPoint,TPoint,TPoint],TLine,function(A,B,C) {
         return euk.Line.create_median(A,B,C);
-    }));
+    },{description:'The line containing the first point and passing through the midpoint of the segment between the second and third'}));
 
     extension.scope.addFunction(new funcObj('+',[TLine,TVector],TLine,function(line,u) {
         return line.translate(vec(u));
-    }));
+    },{description:'Translate a line by a vector'}));
 
     extension.scope.addFunction(new funcObj('-',[TLine,TVector],TLine,function(line,u) {
         return line.translate(vec(Numbas.vectormath.negate(u)));
-    }));
+    },{description:'Translate a line by the opposite of the given vector'}));
 
     extension.scope.addFunction(new funcObj('reflect',[TLine,TPoint],TLine,function(line,p) {
         return line.reflect(p);
-    }));
+    },{description:'Reflect a line in a point'}));
 
     extension.scope.addFunction(new funcObj('symmetric',[TLine,TPoint],TLine,function(line,p) {
         return line.symmetric(p);
-    }));
+    },{description:'180° degree rotation of a line around the given point'}));
 
     extension.scope.addFunction(new funcObj('rotate',[TLine,TPoint,TAngle],TLine,function(line,origin,angle) {
         return line.rotate(origin,angle);
-    }));
+    },{description:'Rotate a line by the given angle around the given point'}));
 
     extension.scope.addFunction(new funcObj('homothetic',[TLine,TPoint,TNum],TLine,function(line,origin,k) {
         return line.homothetic(origin,k);
-    }));
+    },{description:'Homothecy (reduction or dilation) of a line with respect to the given point and scale factor'}));
 
     extension.scope.addFunction(new funcObj('argument',[TLine],TAngle,function(line) {
         return line.argument();
-    }));
+    },{description:'Direction angle of the given line'}));
 
     extension.scope.addFunction(new funcObj('distance',[TLine,TPoint],TNum,function(l,p) {
         return euk.point_line_distance(p,l);
-    }));
+    },{description:'Distance between the given line and point'}));
 
     extension.scope.addFunction(new funcObj('distance',[TPoint,TLine],TNum,function(p,l) {
         return euk.point_line_distance(p,l);
-    }));
+    },{description:'Distance between the given point and line'}));
 
     extension.scope.addFunction(new funcObj('..',[TPoint,TPoint],TPointSet,function(a,b) {
         return new euk.Set([a,b]);
-    }));
+    },{description:'A segment between two points'}));
 
     extension.scope.addFunction(new funcObj('..',[TPointSet,TPoint],TPointSet,function(set,p) {
         return set.add_tail_point(p);
-    }));
+    },{description:'Add a point to the end of a polygon'}));
 
     extension.scope.addFunction(new funcObj('..',[TPoint,TPointSet],TPointSet,function(p,set) {
         return set.add_head_point(p);
-    }));
+    },{description:'Add a point to the start of a polygon'}));
 
-    extension.scope.addFunction(new funcObj('pointset',[TList],TPointSet,function(points) {
-        return new euk.Set(points);
-    },{unwrapValues: true}))
+    extension.scope.addFunction(new funcObj('pointset',[sig.listof(sig.type('eukleides_point'))],TPointSet,function(points) {
+        return new TPointSet(new euk.Set(points));
+    },{unwrapValues: true},{description:'Construct a polygon from the given list of points'}))
 
     extension.scope.addFunction(new funcObj('polygon',[TNum,TPoint,TNum,TAngle],TPointSet,function(n,origin,r,a) {
         return euk.Set.create_polygon(n,origin,r,a);
-    }));
+    },{description:'A regular polygon with the given number of sides and circumradius, with center at the given point and rotated by the given angle'}));
 
     extension.scope.addFunction(new funcObj('segment',[TPointSet,TPoint],TPointSet,function(set,p) {
         return set.segment(p);
-    }));
+    },{description:'A segment from the first point of the given polygon to the given point'}));
 
     extension.scope.addFunction(new funcObj('..',[TPointSet,TPointSet],TPointSet,function(a,b) {
         return a.concatenate(b);
-    }));
-
-    extension.scope.addFunction(new funcObj('list',[TPointSet],TList,function(set) {
-        return new TList(set.points.map(function(p){ return new TPoint(p)}));
-    },{unwrapValues: true}));
-
-    extension.scope.addFunction(new funcObj('listval',[TPointSet,TNum],TPoint,function(set,i) {
-        return set.extract_point(i);
-    }));
+    },{description:'Concatenate two polygons'}));
 
     extension.scope.addFunction(new funcObj('+',[TPointSet,TVector],TPointSet,function(set,u) {
         return set.translate(vec(u));
-    }));
+    },{description:'Translate a polygon by the given vector'}));
 
     extension.scope.addFunction(new funcObj('-',[TPointSet,TVector],TPointSet,function(set,u) {
         return set.translate(vec(Numbas.vectormath.negate(u)));
-    }));
-
-    extension.scope.addFunction(new funcObj('listval',[TPointSet,TRange],TPointSet,function(set,range) {
-        var size = set.cardinal();
-        var start = Numbas.util.wrapListIndex(range[0],size);
-        var end = Numbas.util.wrapListIndex(range[1],size);
-        return set.extract_subset(start,end);
-    }));
+    },{description:'Translate a polygon by the opposite of the given vector'}));
 
     extension.scope.addFunction(new funcObj('reflect',[TPointSet,TLine],TPointSet,function(set,line) {
         return set.reflect(line);
-    }));
+    },{description:'Reflect a polygon in the given point'}));
 
     extension.scope.addFunction(new funcObj('symmetric',[TPointSet,TPoint],TPointSet,function(set,p) {
         return set.symmetric(p);
-    }));
+    },{description:'180° degree rotation of the given polygon around the given point'}));
 
     extension.scope.addFunction(new funcObj('rotate',[TPointSet,TPoint,TAngle],TPointSet,function(set,origin,a) {
         return set.rotate(origin,a);
-    }));
+    },{description:'Rotation of a polygon by the given angle around the given point'}));
 
     extension.scope.addFunction(new funcObj('cardinality',[TPointSet],TNum,function(set) {
         return set.cardinal();
-    }));
+    },{description:'Number of vertices in the given polygon'}));
 
     extension.scope.addFunction(new funcObj('perimeter',[TPointSet],TNum,function(set) {
         return set.path_length();
-    }));
+    },{description:'Total length of the given polygon\'s edges'}));
 
     extension.scope.addFunction(new funcObj('area',[TPointSet],TNum,function(set) {
         return set.area();
-    }));
+    },{description:'Area of the given polygon'}));
 
     extension.scope.addFunction(new funcObj('perpendicular',[TPointSet,TPoint],TLine,function(set,p) {
         return set.perpendicular_to_segment(p);
-    }));
+    },{description:'A line perpendicular to the given segment and containing the given point'}));
 
     extension.scope.addFunction(new funcObj('perpendicular_bisector',[TPointSet],TLine,function(set) {
         return set.perpendicular_bisector();
-    }));
+    },{description:'The perpendicular bisector of the given segment'}));
 
     extension.scope.addFunction(new funcObj('isobarycenter',[TPointSet],TPoint,function(set) {
         return set.isobarycenter();
-    }));
+    },{description:'The isobarycenter of the given polygon'}));
 
     extension.scope.addFunction(new funcObj('circle',[TPoint,TNum],TCircle,function(center,r) {
         return new euk.Circle(center,r);
-    }));
+    },{description:'A circle with centered at the given point and with the given radius'}));
 
     extension.scope.addFunction(new funcObj('circle',[TPointSet],TCircle,function(set) {
         return euk.Circle.create_circle_with_diameter(set);
-    }));
+    },{description:'The circle with the given segment as a diameter'}));
 
     extension.scope.addFunction(new funcObj('circle',[TPoint,TPoint,TPoint],TCircle,function(A,B,C) {
         return euk.Circle.create_circumcircle(A,B,C);
-    }));
+    },{description:'The circle through the given points'}));
 
     extension.scope.addFunction(new funcObj('incircle',[TPoint,TPoint,TPoint],TCircle,function(A,B,C) {
         return euk.Circle.create_incircle(A,B,C);
-    }));
+    },{description:'The circle inscribed in the triangle defined by the given points'}));
 
     extension.scope.addFunction(new funcObj('center',[TCircle],TPoint,function(circle) {
         return circle.center();
-    }));
+    },{description:'The center of the given circle'}));
 
     extension.scope.addFunction(new funcObj('tangent',[TCircle,TAngle],TLine,function(circle,a) {
         return circle.tangent(a);
-    }));
+    },{description:'A line tangent to the given circle at the given heading'}));
 
     extension.scope.addFunction(new funcObj('arc',[TCircle,TAngle,TAngle],TCircle,function(circle,from,to) {
         var c = new TCircle(circle);
         c.from = from;
         c.to = to;
         return c;
-    },{unwrapValues:true}));
+    },{unwrapValues:true, description: 'An arc of the given circle between the given angles'}));
 
     extension.scope.addFunction(new funcObj('ellipse',[TPoint,TNum,TNum,TAngle],TConic,function(v,a,b,d) {
         return new euk.Ellipse(v,a,b,d);
-    }));
+    },{description:'An ellipse with the given center, major and minor axis, and rotated by the given angle'}));
 
     extension.scope.addFunction(new funcObj('hyperbola',[TPoint,TNum,TNum,TAngle],TConic,function(v,x,y,a) {
         return new euk.Hyperbola(v,x,y,a);
-    }));
+    },{description:'A hyperbola with the given center, real and imaginary axis, and rotated by the given angle'}));
 
-    extension.scope.addFunction(new funcObj('parabola',[TPoint,TNum,TNum,TAngle],TConic,function(v,a,d) {
+    extension.scope.addFunction(new funcObj('parabola',[TPoint,TNum,TAngle],TConic,function(v,a,d) {
         return new euk.Parabola(v,a,d);
-    }));
+    },{description:'A parabola with the given summit and parameter, rotated by the given angle'}));
 
-    extension.scope.addFunction(new funcObj('parabola',[TPoint,TLine,TNum],TConic,function(A,l) {
+    extension.scope.addFunction(new funcObj('parabola',[TPoint,TLine],TConic,function(A,l) {
         return euk.Conic.create_with_directrix(A,l,1);
-    }));
+    },{description:'A parabola with the given focus and directrix'}));
 
     extension.scope.addFunction(new funcObj('conic',[TPoint,TLine,TNum],TConic,function(A,l,x) {
         return euk.Conic.create_with_directrix(A,l,x);
-    }));
+    },{description:'A conic with the given focus, directrix and eccentricity'}));
 
     extension.scope.addFunction(new funcObj('conic',[TPoint,TPoint,TNum],TConic,function(A,B,a) {
         return euk.Conic.create_with_foci(A,B,a);
-    }));
+    },{description:'A conic with the given foci and eccentricity'}));
 
     extension.scope.addFunction(new funcObj('center',[TConic],TPoint,function(conic) {
         return conic.center();
-    }));
+    },{description:'The center of the given conic'}));
 
     extension.scope.addFunction(new funcObj('foci',[TConic],TList,function(conic) {
         return conic.foci();
-    },{unwrapValues:true}));
+    },{unwrapValues:true, description: 'The foci of the given conic'}));
 
     extension.scope.addFunction(new funcObj('+',[TConic,TVector],TConic,function(conic,u) {
         return conic.translate(vec(u));
-    }));
+    },{description:'Translate a conic by the given vector'}));
 
     extension.scope.addFunction(new funcObj('-',[TConic,TVector],TConic,function(conic,u) {
         return conic.translate(vec(Numbas.vectormath.negate(u)));
-    }));
+    },{description:'Translate a conic by the opposite of the given vector'}));
 
     extension.scope.addFunction(new funcObj('reflect',[TConic,TLine],TConic,function(conic,line) {
         return conic.reflect(line);
-    }));
+    },{description:'Reflect a conic in a line'}));
 
     extension.scope.addFunction(new funcObj('symmetric',[TConic,TPoint],TConic,function(conic,p) {
         return conic.symmetric(p);
-    }));
+    },{description:'180° rotation of the given conic around the given point'}));
 
     extension.scope.addFunction(new funcObj('rotate',[TConic,TPoint,TAngle],TConic,function(conic,origin,a) {
         return conic.rotate(origin,a);
-    }));
+    },{description:'Rotate a conic by the given angle around the given point'}));
 
     extension.scope.addFunction(new funcObj('homothetic',[TConic,TPoint,TNum],TConic,function(conic,origin,k) {
         return conic.homothetic(origin,k);
-    }));
+    },{description:'Homothecy (reduction or dilation) of a conic with respect to the given point and scaling factor'}));
 
     extension.scope.addFunction(new funcObj('major',[TConic],TNum,function(conic) {
         return conic.major_axis();
-    }));
+    },{description:'The major axis of the given conic'}));
 
     extension.scope.addFunction(new funcObj('minor',[TConic],TNum,function(conic) {
         return conic.minor_axis();
-    }));
+    },{description:'The minor axis of the given conic'}));
 
     extension.scope.addFunction(new funcObj('argument',[TConic],TAngle,function(conic) {
         return conic.argument();
-    }));
+    },{description:'The direction of the given conic'}));
 
     extension.scope.addFunction(new funcObj('point',[TConic,TNum],TPoint,function(conic,t) {
         return conic.point_on(t);
-    }));
+    },{description:'A point with the given argument on the given conic'}));
 
     extension.scope.addFunction(new funcObj('eccentricity',[TConic],TNum,function(conic) {
         return conic.eccentricity();
-    }));
+    },{description:'The eccentricity of the given conic'}));
 
     extension.scope.addFunction(new funcObj('argument',[TConic,TPoint],TAngle,function(conic,p) {
         return conic.point_argument(p);
-    }));
+    },{description:'Polar angle of the given point with respect to the center of the given conic'}));
 
     extension.scope.addFunction(new funcObj('tangent',[TConic,TNum],TLine,function(conic,t) {
         return conic.tangent(t);
-    }));
+    },{description:'A line tangent to the given conic at the given argument'}));
 
     extension.scope.addFunction(new funcObj('arc',[TConic,TAngle,TAngle],TConic,function(conic,from,to) {
         var c = new TConic(conic);
         c.from = from;
         c.to = to;
         return c;
-    },{unwrapValues:true}));
+    },{unwrapValues:true, description: 'The portion of the given conic between the given arguments'}));
 
     function wrap_vertices(vertices) {
         return new TList(vertices.map(function(v){ return new TPoint(v); }));
@@ -587,7 +584,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             }
             return wrap_vertices(out);
         }
-    }));
+    },{description:'Create a triangle from the given parameters. Can give up to two vertices; any remaining lengths or angles; and the orientation of the first side if fewer than two vertices given'}));
 
     var sig_right = sig.or(
         sig.sequence(spoint, spoint, snumorangle, sig.optional(sangle)),
@@ -627,7 +624,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             }
             return wrap_vertices(out);
         }
-    }));
+    },{description:'Create a right-angled triangle from the given parameters. Can give up to two vertices; one other length or angle; and the orientation of the first side if fewer than two vertices given'}));
 
     var sig_isosceles = sig.or(
         sig.sequence(spoint, spoint, sig.or(snum,sangle)),
@@ -675,7 +672,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             }
             return wrap_vertices(out);
         }
-    }));
+    },{description:'Create an isosceles triangle from the given points. Can give up to two vertices; one other length or angle; and the orientation of the first side if fewer than two vertices given'}));
 
     var sig_equilateral = sig.or(
         sig.sequence(spoint, spoint, sig.optional(sangle)),
@@ -704,7 +701,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             var out = euk.TriangleMaker.define_equilateral(vertices,x,a);
             return wrap_vertices(out);
         }
-    }));
+    },{description:'Create an equilateral triangle from the given points. Can give up two two vertices; if fewer than two vertices are given must give the length of the first side and optionally the orientation of the first side'}));
 
     var sig_parallelogram = sig.or(
         sig.sequence(spoint, spoint, spoint),
@@ -740,7 +737,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             }
             return wrap_vertices(euk.QuadrilateralMaker.define_parallelogram_SSA(vertices,s2,an,s1,a));
         }
-    }));
+    },{description:'Create a parallelogram from the given points. Can give up to three vertices. If fewer than two vertices given, must give the length of the first side, one more side and an angle, and optionally the orientation of the first side'}));
 
     var sig_rectangle = sig.or(
         sig.sequence(spoint, spoint, sig.optional(snum)),
@@ -772,7 +769,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             }
             return wrap_vertices(euk.QuadrilateralMaker.define_rectangle(vertices,s1,s2,a));
         }
-    }));
+    },{description:'Create a rectangle from the given points. Can give up to two vertices. If fewer than two vertices given, must give the length of the first side. Must give the length of one more side and optionally the orientation of the first side'}));
 
     var sig_square = sig.or(
         sig.sequence(spoint, spoint),
@@ -798,43 +795,43 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             }
             return wrap_vertices(euk.QuadrilateralMaker.define_square(vertices,s,a));
         }
-    }));
+    },{description:'Create a square from the given points. Can give up to two vertices. If fewer than two vertices given, must give the length of the first side and can optionally give the orientation of the first side'}));
 
     extension.scope.addFunction(new funcObj('projection',[TPoint,TLine],TPoint,function(A,l) {
         return euk.orthogonal_projection(A,l);
-    }));
+    },{description:''}));
 
     extension.scope.addFunction(new funcObj('projection',[TPoint,TLine,TLine],TPoint,function(A,l1,l2) {
         return euk.parallel_projection(A,l1,l2);
-    }));
+    },{description:''}));
 
     extension.scope.addFunction(new funcObj('intersection',[TLine,TLine],TPoint,function(l1,l2) {
         return euk.lines_intersection(l1,l2);
-    }));
+    },{description:''}));
 
     extension.scope.addFunction(new funcObj('intersection',[TLine,TPointSet],TPointSet,function(l,set) {
         return euk.line_set_intersection(l,set);
-    }));
+    },{description:''}));
 
     extension.scope.addFunction(new funcObj('intersection',[TLine,TCircle],TPointSet,function(l,c) {
         return euk.line_circle_intersection(l,c);
-    }));
+    },{description:''}));
 
     extension.scope.addFunction(new funcObj('intersection',[TLine,TConic],TPointSet,function(l,c) {
         return euk.line_conic_intersection(l,c);
-    }));
+    },{description:''}));
 
     extension.scope.addFunction(new funcObj('intersection',[TPointSet,TPointSet],TPointSet,function(s1,s2) {
         return euk.sets_intersection(s1,s2);
-    }));
+    },{description:''}));
 
     extension.scope.addFunction(new funcObj('intersection',[TCircle,TCircle],TPointSet,function(c1,c2) {
         return euk.circles_intersection(c1,c2);
-    }));
+    },{description:''}));
 
     extension.scope.addFunction(new funcObj('intersection',[TPointSet,TCircle],TPointSet,function(s,c) {
         return euk.circle_set_intersection(s,c);
-    }));
+    },{description:''}));
 
     var style_commands = {
         'dot': {shape:'dot'},
@@ -877,53 +874,66 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
 
     extension.scope.addFunction(new funcObj('label',[],TDrawing,function() {
         return new TDrawing([],{label:true});
-    }, {unwrapValues: true}));
+    }, {unwrapValues: true},{description:''}));
+
+    extension.scope.addFunction(new funcObj('label',[TString],TDrawing,function(text,angle) {
+        return new TDrawing([],{label:true, label_text: text, label_direction: -Math.PI/4});
+    }, {unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('label',[TString,TAngle],TDrawing,function(text,angle) {
         return new TDrawing([],{label:true, label_text: text, label_direction: angle});
-    }, {unwrapValues: true}));
+    }, {unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('angle',[TPoint,TPoint,TPoint],TAngleLabel,function(a,b,c) {
         return new TAngleLabel(a,b,c);
-    },{unwrapValues: true}));
+    },{unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('size',[TNum],TDrawing,function(size) {
         return new TDrawing([],{size:size});
-    }, {unwrapValues: true}));
+    }, {unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('font',[TString],TDrawing,function(font) {
         return new TDrawing([],{font_family:font});
-    }, {unwrapValues: true}));
+    }, {unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('color',[TString],TDrawing,function(color) {
         return new TDrawing([],{color:color});
-    }, {unwrapValues: true}));
+    }, {unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('opacity',[TNum],TDrawing,function(opacity) {
         return new TDrawing([],{opacity:opacity});
-    }, {unwrapValues: true}));
+    }, {unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('hsl',[TNum,TNum,TNum],TDrawing,function(h,s,l) {
         return new TDrawing([],{color:'hsl('+h+','+(100*s)+'%,'+(100*l)+'%)'});
-    }, {unwrapValues: true}));
+    }, {unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('hsla',[TNum,TNum,TNum,TNum],TDrawing,function(h,s,l,a) {
         return new TDrawing([],{color:'hsla('+h+','+(100*s)+'%,'+(100*l)+'%,'+a+')'});
-    }, {unwrapValues: true}));
+    }, {unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('rgb',[TNum,TNum,TNum],TDrawing,function(r,g,b) {
         return new TDrawing([],{color:'rgb('+r+','+g+','+b+')'});
-    }, {unwrapValues: true}));
+    }, {unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('rgba',[TNum,TNum,TNum,TNum],TDrawing,function(r,g,b,a) {
         return new TDrawing([],{color:'rgb('+r+','+g+','+b+','+a+')'});
-    }, {unwrapValues: true}));
+    }, {unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('*',[TDrawing,TDrawing],TDrawing,function(d1,d2) {
         var objects = d1.objects.concat(d2.objects);
         var style = Numbas.util.extend_object({},d1.style,d2.style);
         return new TDrawing(objects,style);
-    }, {unwrapValues: true}));
+    }, {unwrapValues: true},{description:''}));
+
+    extension.scope.addFunction(new funcObj('*',[TPointSet,TDrawing],TDrawing,null,{
+        evaluate: function(args,scope) {
+            var object = args[0];
+            var d = args[1].value;
+            var nobjects = d.objects.concat([object]);
+            return new TDrawing(nobjects, d.style);
+        }
+    },{description:''}))
 
     extension.scope.addFunction(new funcObj('*',[TList,TDrawing],TDrawing,null,{
         evaluate: function(args,scope) {
@@ -932,7 +942,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             var nobjects = d.objects.concat(objects);
             return new TDrawing(nobjects, d.style);
         }
-    }))
+    },{description:''}))
 
     extension.scope.addFunction(new funcObj('*',['?',TDrawing],TDrawing,null,{
         evaluate: function(args,scope) {
@@ -941,9 +951,9 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             var nobjects = d.objects.concat([object]);
             return new TDrawing(nobjects, d.style);
         }
-    }))
+    },{description:''}))
 
-    extension.scope.addFunction(new funcObj('draw',[TNum,TNum,TNum,TNum,TNum,'*?'],THTML,null,{
+    extension.scope.addFunction(new funcObj('draw_canvas',[TNum,TNum,TNum,TNum,TNum,'*?'],THTML,null,{
         evaluate: function(args,scope) {
             var width = args[0].value;
             var min_x = args[1].value;
@@ -957,9 +967,9 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             draw_drawing(drawer,drawing.value);
             return new THTML(canvas);
         }
-    }));
+    },{description:''}));
 
-    extension.scope.addFunction(new funcObj('draw',[TNum,'*?'],THTML,null,{
+    extension.scope.addFunction(new funcObj('draw_canvas',[TNum,'*?'],THTML,null,{
         evaluate: function(args,scope) {
             var width = args[0].value;
             var canvas = document.createElement('canvas');
@@ -968,9 +978,9 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             draw_drawing(drawer,drawing.value);
             return new THTML(canvas);
         }
-    }));
+    },{description:''}));
 
-    extension.scope.addFunction(new funcObj('draw',['*?'],THTML,null,{
+    extension.scope.addFunction(new funcObj('draw_canvas',['*?'],THTML,null,{
         evaluate: function(args,scope) {
             var canvas = document.createElement('canvas');
             var drawer = new euk.CanvasDrawer(canvas);
@@ -978,7 +988,102 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             draw_drawing(drawer,drawing.value);
             return new THTML(canvas);
         }
-    }));
+    },{description:''}));
+
+    function draw_svg(drawing,min_x,min_y,max_x,max_y) {
+        var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+        var drawer = new euk.SVGDrawer(svg,document);
+        if(min_x!==undefined) {
+            drawer.setup_frame(min_x,min_y,max_x,max_y,1);
+        }
+        draw_drawing(drawer,drawing.value);
+        return svg;
+    }
+
+    function find_bounding_box(drawing) {
+        // Draw with default frame first, then find a bounding box for all the elements
+        var svg = draw_svg(drawing);
+
+        document.body.appendChild(svg);
+        var svg_rect = svg.getBoundingClientRect();
+        var min_x = Infinity, min_y = Infinity, max_x = -Infinity, max_y = -Infinity;
+        var children = Array.prototype.slice.apply(svg.children);
+        children.forEach(function(c) {
+            var r = c.getBBox();
+            var m = c.getCTM();
+
+            /* Text elements are scaled (1,-1) to get them the right way up, since
+             * the global coords are flipped so positive y is up.
+             * getBBox doesn't apply the transformation, even though it should,
+             * so we have to flip the y coordinate manually
+             */
+            var y = m.d>0 ? r.y : -(r.y+r.height);  
+
+            min_x = Math.min(min_x, r.x);
+            min_y = Math.min(min_y, y);
+            max_x = Math.max(max_x, r.x+r.width);
+            max_y = Math.max(max_y, y+r.height);
+        });
+        if(children.length==0) {
+            min_x = 0;
+            max_x = 1;
+            min_y = 0;
+            max_y = 1;
+        }
+
+        var w = (max_x-min_x)*1.1;
+        var h = (max_y-min_y)*1.1;
+        var cx = (max_x+min_x)/2;
+        var cy = (max_y+min_y)/2;
+        min_x = cx - w/2;
+        min_y = cy - h/2;
+        max_x = cx + w/2;
+        max_y = cy + h/2;
+
+        document.body.removeChild(svg);
+        
+        return {min_x: min_x, min_y: min_y, max_x: max_x, max_y: max_y};
+    }
+
+    function draw_interactive_svg(args,scope,min_x,min_y,max_x,max_y) {
+        var start = new Date();
+        var div = document.createElement('div');
+        var mousex = 0;
+        var mousey = 0;
+        var animating = false;
+        function draw() {
+            var now = new Date();
+            var t = (now - start)/1000;
+            try {
+                var drawing = new TDrawing(args.map(function(a){return scope.evaluate(a,{time: new jme.types.TNum(t), mousex: new jme.types.TNum(mousex), mousey: new jme.types.TNum(mousey)})}));
+                var svg = draw_svg(drawing,min_x,min_y,max_x,max_y);
+            } catch(e) {
+                console.error(e);
+            }
+            div.innerHTML = '';
+            div.appendChild(svg);
+        }
+        function frame() {
+            if(animating) {
+                draw();
+            }
+            requestAnimationFrame(frame);
+        }
+        div.addEventListener('mouseover',function(e) {
+            animating = true;
+        });
+        div.addEventListener('mouseout',function(e) {
+            animating = false;
+        });
+        div.addEventListener('mousemove',function(e) {
+            var r = div.getBoundingClientRect();
+            mousex = (e.clientX-r.x)/r.width*(max_x-min_x)+min_x;
+            mousey = (e.clientY-r.y)/r.height*(min_y-max_y)+max_y;
+        });
+        draw();
+        frame();
+        return div;
+    }
 
     extension.scope.addFunction(new funcObj('draw_svg',[TNum,TNum,TNum,TNum,'*?'],THTML,null,{
         evaluate: function(args,scope) {
@@ -986,27 +1091,46 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             var min_y = args[1].value;
             var max_x = args[2].value;
             var max_y = args[3].value;
-            var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-            var drawer = new euk.SVGDrawer(svg,document);
-            drawer.setup_frame(min_x,min_y,max_x,max_y,1);
             var drawing = new TDrawing(args.slice(4));
-            draw_drawing(drawer,drawing.value);
+            var svg = draw_svg(drawing,min_x,min_y,max_x,max_y);
             return new THTML(svg);
         }
-    }));
+    },{description:''}));
 
     extension.scope.addFunction(new funcObj('draw_svg',['*?'],THTML,null,{
         evaluate: function(args,scope) {
-            var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-            var drawer = new euk.SVGDrawer(svg,document);
             var drawing = new TDrawing(args);
-            draw_drawing(drawer,drawing.value);
+            var res = find_bounding_box(drawing);
+            // Now redraw the drawing, using the derived bounding box
+            var svg = draw_svg(drawing,res.min_x,res.min_y,res.max_x,res.max_y);
+
             return new THTML(svg);
         }
-    }));
+    },{description:''}));
 
-    /*
-    extension.scope.addFunction(new funcObj('',[],,function() {
-    }));
-    */
+    extension.scope.addFunction(new funcObj('draw_interactive_svg',[TNum,TNum,TNum,TNum,TDrawing],THTML,null,{
+        evaluate: function(args,scope) {
+            var objects;
+            var min_x,min_y,max_x,max_y;
+            if(args.length==1) {
+                objects = args[0].args;
+                var zero = new jme.types.TNum(0);
+                var drawing = new TDrawing(objects.map(function(a){return scope.evaluate(a,{time: zero, mousex: zero, mousey: zero})}));
+                var res = find_bounding_box(drawing);
+                min_x = res.min_x;
+                min_y = res.min_y;
+                max_x = res.max_x;
+                max_y = res.max_y;
+            } else {
+                min_x = scope.evaluate(args[0]).value;
+                min_y = scope.evaluate(args[1]).value;
+                max_x = scope.evaluate(args[2]).value;
+                max_y = scope.evaluate(args[3]).value;
+                objects = args[4].args;
+            }
+            var container = draw_interactive_svg(objects,scope,min_x,min_y,max_x,max_y);
+            return new THTML(container);
+        }
+    },{description:''}));
+    Numbas.jme.lazyOps.push('draw_interactive_svg');
 });

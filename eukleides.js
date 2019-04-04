@@ -1439,7 +1439,8 @@ class Drawer {
             bold: false,
             italic: false,
             font_family: 'serif',
-            close: true
+            close: true,
+            label_dist: 0.2
         }
     }
 
@@ -2135,7 +2136,7 @@ class SVGDrawer extends Drawer {
         super.setup_frame(min_x,min_y,max_x,max_y,scale);
 
         this.svg.setAttribute('viewBox',`${dp(min_x)} ${dp(min_y)} ${dp(max_x-min_x)} ${dp(max_y-min_y)}`);
-        this.svg.setAttribute('transform',`scale(${dp(scale)} ${dp(-scale)})`);
+        this.svg.style.transform = `scale(${dp(scale)},${dp(-scale)})`;
     }
 
     check_color() { }
@@ -2315,7 +2316,7 @@ class SVGDrawer extends Drawer {
     }
 
     draw_text(text,x,y) {
-        const e = this.element('text',{x:x,y:-y,'dominant-baseline': 'central',transform:`scale(1,-1)`},clean_label(text));
+        const e = this.element('text',{x:x,y:-y,'dominant-baseline': 'central', transform: 'scale(1,-1)'},clean_label(text));
         this.set_font(e);
         this.set_fill(e);
         return e;
@@ -2330,7 +2331,7 @@ class SVGDrawer extends Drawer {
         if(angle<-PI) {
             angle += 2*PI;
         }
-        const dist = this.SIZE(this.default_dist);
+        const dist = this.SIZE(this.local.label_dist);
         const x = A.x+dist*cos(angle);
         const y = A.y+dist*sin(angle);
         const e = this.draw_text(text,x,y);

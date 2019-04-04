@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <script src="jme-runtime.js"></script>
+        <script src="locales.js"></script>
+        <script src="extension.js"></script>
+        <script src="playground.js" type="module"></script>
+        <style>
+body {
+    display: grid;
+    grid: [a] 1fr [b] 1fr [c] /1fr 1fr;
+    grid-gap: 0.2em;
+    height: 100vh;
+    padding: 0;
+    margin: 0;
+    background: #333;
+}
+body.error {
+    grid-template-rows: [a] 1fr [b] 1fr [c] [err-start] max-content [err-end];
+    background: #633;
+}
+body > * {
+    background: white;
+}
+* {
+    box-sizing: border-box;
+}
+#output { 
+    grid-row: a / c;
+    grid-column: 2;
+}
+#output > svg {
+    max-height: 99vh;
+}
+
+#code {
+    grid-row: a / b;
+    padding: 1em;
+    font-size: 1.5em;
+    height: 100%;
+    margin: 0;
+    border: 0;
+    resize: none;
+    overflow-y: scroll;
+}
+#help {
+    grid-row: b / c;
+    padding: 1em;
+    overflow-y: scroll;
+}
+
+#help * ~ dt {
+    margin-top: 2em;
+}
+#help dt {
+    background: #eee;
+    padding: 0.3em 1em;
+}
+#help dd li ~ li {
+    margin-top: 0.5em;
+}
+#help dd .description {
+    margin: 0.2em 0 0 0;
+    font-style: italic;
+}
+
+body.error #output {
+  background: hsl(0,50%,90%);
+}
+body:not(.error) #error {
+    display: none;
+}
+body.error #error {
+    grid-row: err;
+    grid-column: 1 / 3;
+    background: red;
+    color: white;
+    padding: 0.5em 0.5em;
+}
+        </style>
+    </head>
+    <body>
+        <div id="error"></div>
+        <textarea id="code">
+draw_interactive_svg(-2,-4,5,4,[
+  let(theta,argument(vector(mousex,mousey)),
+      a,point(circle(O,1),theta),
+      b,point(circle(O,1),theta+deg(120)),
+      c,point(circle(O,1),theta+deg(240)),
+      [a..b..c, circle(a,b,c), a label("Mouse",theta)]
+  ),
+  let(
+    t, 5*time,
+    hours, t,
+    seconds, 60*t,
+    centre, vector(3,0),
+    O, O+centre,
+    h1, point(0.5,deg(90-hours))+centre,
+    h2, point(0.7,deg(90-seconds))+centre,
+    [
+      circle(O,1),
+      O..h1,
+      O..h2
+    ]
+  )
+])
+        </textarea>
+        <div id="output">
+        </div>
+        <div id="help">
+            <dl id="function-definitions"></dl>
+        </div>
+    </body>
+</html>
+
