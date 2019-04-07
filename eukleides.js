@@ -2130,6 +2130,22 @@ class SVGDrawer extends Drawer {
         this.svg = svg;
         this.initialise();
         this.doc = doc || document;
+        this.shapes = {};
+        this.elements = {};
+        this.before_render();
+    }
+
+    before_render() {
+        this.used_ids = {};
+        this.idacc = 0;
+    }
+    after_render() {
+        Object.entries(this.elements).forEach(([id,element]) => {
+            if(!this.used_ids[id]) {
+                delete this.elements[id];
+                element.parentElement.removeChild(element);
+            }
+        });
     }
 
     setup_frame(min_x,min_y,max_x,max_y,scale) {
@@ -2179,7 +2195,18 @@ class SVGDrawer extends Drawer {
     }
 
     element(name,attr,content) {
-        const e = this.doc.createElementNS('http://www.w3.org/2000/svg',name);
+        const id = this.idacc++;
+        this.used_ids[id] = true;
+        const olde = this.elements[id];
+        let e;
+        if(olde && olde.tagName==name) {
+            e = olde;
+        } else {
+            e = this.doc.createElementNS('http://www.w3.org/2000/svg',name);
+            e.setAttribute('data-eukleides-id',id);
+            this.svg.appendChild(e);
+        }
+        this.elements[id] = e;
         if(attr) {
             for(let [k,v] of Object.entries(attr)) {
                 e.setAttribute(k,v);
@@ -2188,7 +2215,6 @@ class SVGDrawer extends Drawer {
         if(content!==undefined) {
             e.innerHTML = content;
         }
-        this.svg.appendChild(e);
         return e;
     }
 
@@ -2196,6 +2222,38 @@ class SVGDrawer extends Drawer {
         var odef = element.getAttribute('transform') || '';
         element.setAttribute('transform',[odef,def].join(' '));
         return element;
+    }
+
+    handle_dragging(element,callback) {
+        var onstart = (e) => {
+            const ondrag = callback();
+            e.stopPropagation();
+            e.preventDefault();
+            e = e.touches ? e.touches[0] : e;
+            const [sx,sy] = [e.clientX, e.clientY];
+            var onmove = (e) => {
+                e.preventDefault();
+                e = e.touches ? e.touches[0] : e;
+                const m = element.getScreenCTM().inverse();
+                const p = this.svg.createSVGPoint();
+                p.x = e.clientX;
+                p.y = -e.clientY;
+                const tp1 = p.matrixTransform(m);
+                p.x = sx;
+                p.y = -sy;
+                const tp0 = p.matrixTransform(m);
+                const [dx,dy] = [tp1.x-tp0.x,tp1.y-tp0.y];
+                ondrag(dx,dy);
+            }
+            var onend = (e) => {
+                e.preventDefault();
+                document.removeEventListener('mousemove',onmove);
+                document.removeEventListener('mouseup',onend);
+            }
+            document.addEventListener('mousemove',onmove);
+            document.addEventListener('mouseup',onend);
+        }
+        element.addEventListener('mousedown',onstart);
     }
 
     show(element) {
@@ -2287,32 +2345,35 @@ class SVGDrawer extends Drawer {
         const size = this.SIZE(0.05);
         this.check_color();
 
-        switch(this.local.shape) {
-            case DOT:
-                return this.draw_dot(A.x,A.y,size);
-            case DISC:
-                const disc = this.arc(A.x,A.y,size,0,2*PI);
-                this.set_stroke(disc);
-                return disc;
-            case BOX:
-                const r = this.element('rect',{x:A.x-size, y:A.y-size, width: 2*size, height: 2*size});
-                this.set_fill(r);
-                return r;
-            case PLUS:
-                const plus = this.element('path',{
-                    d: `M ${dp(A.x-size)} ${dp(A.y)} l ${dp(2*size)} 0 M ${dp(A.x)} ${dp(A.y-size)} l 0 ${dp(2*size)}`
-                });
-                this.set_stroke(plus);
-                return plus;
-            case CROSS:
-                const cross = this.element('path',{
-                    d: `M ${dp(A.x-size)} ${dp(A.y-size)} l ${dp(2*size)} ${dp(2*size)} M ${dp(A.x-size)} ${dp(A.y+size)} l ${dp(2*size)} ${dp(-2*size)}`
-                });
-                this.set_stroke(cross);
-                return cross;
-            default:
-                console.error("no style");
-        }
+        const element = (() => {
+            switch(this.local.shape) {
+                case DOT:
+                    return this.draw_dot(A.x,A.y,size);
+                case DISC:
+                    const disc = this.arc(A.x,A.y,size,0,2*PI);
+                    this.set_stroke(disc);
+                    return disc;
+                case BOX:
+                    const r = this.element('rect',{x:A.x-size, y:A.y-size, width: 2*size, height: 2*size});
+                    this.set_fill(r);
+                    return r;
+                case PLUS:
+                    const plus = this.element('path',{
+                        d: `M ${dp(A.x-size)} ${dp(A.y)} l ${dp(2*size)} 0 M ${dp(A.x)} ${dp(A.y-size)} l 0 ${dp(2*size)}`
+                    });
+                    this.set_stroke(plus);
+                    return plus;
+                case CROSS:
+                    const cross = this.element('path',{
+                        d: `M ${dp(A.x-size)} ${dp(A.y-size)} l ${dp(2*size)} ${dp(2*size)} M ${dp(A.x-size)} ${dp(A.y+size)} l ${dp(2*size)} ${dp(-2*size)}`
+                    });
+                    this.set_stroke(cross);
+                    return cross;
+                default:
+                    console.error("no style");
+            }
+        })();
+        return element;
     }
 
     draw_text(text,x,y) {

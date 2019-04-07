@@ -107,7 +107,7 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
     }
 
     code.addEventListener('input',remake);
-    output.addEventListener('click',remake);
+//    output.addEventListener('click',remake);
     remake();
 
 });
