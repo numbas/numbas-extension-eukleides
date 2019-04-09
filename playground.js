@@ -93,6 +93,7 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
     }
 
     var remake = window.remake = function() {
+        console.clear();
         const script = code.value;
         try {
             error = false;

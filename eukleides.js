@@ -2290,13 +2290,17 @@ class SVGDrawer extends Drawer {
         return c;
     }
 
-    arc(x,y,r,a,b,large_circle) {
-        const d = Math.abs(b-a);
+    arc(x,y,r,a,b) {
+        let d = b-a;
+        let sweep = 0;
+        if(d>0) {
+            d -= 2*PI;
+        }
+        let large_circle = Math.abs(d)>=PI ? 1 : 0;
         if(d>=2*PI) {
             return this.element('circle',{cx:x,cy:y,r:r});
         } else {
-            large_circle = d>=PI ? 1 : 0;
-            return this.element('path',{d: `M ${dp(x+Math.cos(a)*r)} ${dp(y+Math.sin(a)*r)} A ${dp(r)} ${dp(r)} 0 ${large_circle} ${d<0 ? 0 : 1} ${dp(x+Math.cos(b)*r)} ${dp(y+Math.sin(b)*r)}`});
+            return this.element('path',{d: `M ${dp(x+Math.cos(a)*r)} ${dp(y+Math.sin(a)*r)} A ${dp(r)} ${dp(r)} 0 ${large_circle} ${sweep} ${dp(x+Math.cos(b)*r)} ${dp(y+Math.sin(b)*r)}`});
         }
     }
 
@@ -2469,12 +2473,13 @@ class SVGDrawer extends Drawer {
         }
         if(this.local.label_text) {
             this.push_local_settings();
-            this.local.label_direction = argument(A,B)+PI/2;
+            if(this.local.label_direction===undefined) {
+                this.local.label_direction = argument(A,B)+PI/2;
+            }
             const m = Point.create_midpoint(new Set([A,B]));
             text = this.label_point(m);
             this.pop_local_settings();
         }
-        console.log(mark,text);
         if(mark && text) {
             const g = this.element('g');
             g.appendChild(mark);
@@ -2485,11 +2490,6 @@ class SVGDrawer extends Drawer {
     }
 
     draw_mark(B,r,a,b) {
-        [a,b] = [Math.min(a,b), Math.max(a,b)];
-        const d = b-a;
-        if(d>PI) {
-            [a,b] = [b,a+2*PI];
-        }
         const e = this.arc(B.x,B.y,r,a,b);
         this.set_stroke(e);
         return e;
@@ -2505,16 +2505,17 @@ class SVGDrawer extends Drawer {
     }
 
     label_angle(A,B,C) {
-        const a = argument(B,A);
-        const b = argument(B,C);
-        const r = this.SIZE(0.5);
+        const a = argument(B,C);
+        const b = argument(B,A);
+        const wiggle = (a%(2*PI)+(a<0 ? 2*PI : 0))/(4*PI)*0.2; // so angles round the same point can be distinguished
+        const r = this.SIZE(0.5+wiggle);
         const s = 0.08/this.scale;
         let x1,y1,x2,y2;
         const t = (8*PI/180)/this.local.size;
         const g = this.element('g');
         switch(this.local.angle) {
             case SIMPLE:
-                this.draw_mark(B,r,a,b);
+                g.appendChild(this.draw_mark(B,r,a,b));
                 switch(this.local.dec) {
                     case DOTTED:
                         [x1,y1,x2,y2] = this.set_xy(A,B,C,this.SIZE(Math.sqrt(2)/8));
@@ -2566,13 +2567,25 @@ class SVGDrawer extends Drawer {
             case FORTH:
                 this.draw_mark(B,r,a,b);
                 [x1,y1,x2,y2] = this.set_xy(A,B,C,r);
-                g.appendChild(this.draw_arrow(B.x+x2,B.y+y2, b+acos(0.12/this.scale), 0.1/this.scale));
+                g.appendChild(this.draw_arrow(B.x+x2,B.y+y2, a+acos(0.12/this.scale), 0.1/this.scale));
                 break;
             case BACK:
                 this.draw_mark(B,r,a,b);
                 [x1,y1,x2,y2] = this.set_xy(A,B,C,r);
-                g.appendChild(this.draw_arrow(B.x+x1,B.y+y1, a-acos(0.12/this.scale), 0.1/this.scale));
+                g.appendChild(this.draw_arrow(B.x+x1,B.y+y1, b-acos(0.12/this.scale), 0.1/this.scale));
                 break;
+        }
+        if(this.local.label_text) {
+            this.push_local_settings();
+            let da = (b-a)/2;
+            if(da>0) {
+                da += PI;
+            }
+            this.local.label_direction = a + da;
+            this.local.label_dist = (r+2*s)*this.scale;
+            const text = this.label_point(B);
+            g.appendChild(text);
+            this.pop_local_settings();
         }
         return g;
     }

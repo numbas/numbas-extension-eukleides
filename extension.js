@@ -161,6 +161,8 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
 
     extension.scope.addFunction(new funcObj('+',[TAngle,TAngle],TAngle,math.add),
     {description: 'Add two angles'});
+    extension.scope.addFunction(new funcObj('-',[TAngle,TAngle],TAngle,math.sub),
+    {description: 'Add two angles'});
     extension.scope.addFunction(new funcObj('deg',[TNum],TAngle,function(degrees) {
         var rad = math.radians(degrees);
         return rad;
@@ -895,20 +897,12 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return new TDrawing([],{draggable:true, key: key, color: 'blue',size:1.5});
     }, {unwrapValues: true},{description:''}));
 
-    extension.scope.addFunction(new funcObj('label_length',[TPointSet],TDrawing,function(set) {
-        var m = euk.Point.create_midpoint(set);
-        var v = euk.Vector.create_from_segment(set.points);
-        var d = v.length();
-        var arg = v.argument();
-        return new TDrawing([new TPoint(m)],{label:true, label_text: math.niceNumber(d), label_direction: arg+Math.PI/2});
-    }, {unwrapValues: true},{description:'Label the length of a segment at its midpoint'}));
-
     extension.scope.addFunction(new funcObj('label',[],TDrawing,function() {
         return new TDrawing([],{label:true});
     }, {unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('label',[TString],TDrawing,function(text) {
-        return new TDrawing([],{label:true, label_text: text, label_direction: -Math.PI/4});
+        return new TDrawing([],{label:true, label_text: text});
     }, {unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('label',[TString,TAngle],TDrawing,function(text,angle) {
@@ -1046,10 +1040,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return svg;
     }
 
-    function find_bounding_box(drawing) {
-        // Draw with default frame first, then find a bounding box for all the elements
-        var svg = draw_svg(drawing);
-
+    function find_bounding_box(svg) {
         document.body.appendChild(svg);
         var svg_rect = svg.getBoundingClientRect();
         var min_x = Infinity, min_y = Infinity, max_x = -Infinity, max_y = -Infinity;
@@ -1262,15 +1253,15 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             var objects;
             var title = scope.evaluate(args[0]).value;
             var min_x,min_y,max_x,max_y,initial_values;
-            if(args.length==2) {
+            if(args.length<=3) {
                 objects = args[1];
-                var zero = new jme.types.TNum(0);
-                var drawing = new TDrawing(objects.args.map(function(a){return scope.evaluate(a,{time: zero, mousex: zero, mousey: zero})}));
-                var res = find_bounding_box(drawing);
-                min_x = res.min_x;
-                min_y = res.min_y;
-                max_x = res.max_x;
-                max_y = res.max_y;
+                if(args[2]) {
+                    initial_values = scope.evaluate(args[2]);
+                    if(initial_values.type!='dict') {
+                        throw(new Numbas.Error("The 3rd argument to draw_interactive_svg must be a dictionary, not "+initial_values.type));
+                    }
+                    initial_values = initial_values.value;
+                }
             } else {
                 min_x = scope.evaluate(args[1]).value;
                 min_y = scope.evaluate(args[2]).value;
@@ -1292,7 +1283,12 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                 drawer.setup_frame(min_x,min_y,max_x,max_y,1);
             }
 
-            var ctx = new InteractiveContext(drawer,objects,scope,initial_values);
+            var ctx = new InteractiveContext(drawer,objects,scope,initial_values,min_x===undefined);
+
+            if(min_x===undefined) {
+                var res = find_bounding_box(svg);
+                drawer.setup_frame(res.min_x,res.min_y,res.max_x,res.max_y,1);
+            }
 
             return new THTML(svg);
         }

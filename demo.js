@@ -429,4 +429,42 @@ draw_svg("Parallel lines in a circle",-3.5,-3.5,3.5,3.5,
 ],["ana":50])
 `);
 
+show_diagram(`
+draw_svg("A thing",[
+  let(
+    ana, deg(d1)
+  , anb, deg(d2)
+  , a, origin
+  , b, point(4,deg(90)-ana)
+  , c, point(5,deg(90)-anb)+(b-a)
+  , m, (a+vector(0,1))
+  , n, (b+vector(0,1))
+  , p, (c+vector(0,1.5)) 
+  , [
+      (a..b..c)
+    , (a..b) label("4")
+    , (b..c) label("5")
+    , (a..c) label("x",deg(180)) italic
+    , (a..m) arrow
+    , (b..n) arrow
+    , (c..p) arrow
+    , ([
+        a label("A",deg(180))
+      , b label("B")
+      , c label("C",deg(-90))
+      , m label("M",deg(90),0.1)
+      , n label("N",deg(90),0.1)
+      , p label("P",deg(90),0.1)
+      ]) italic
+    , angle(b,a,m) label(ana)
+    , angle(c,b,n) label(anb)
+    , angle(c,a,b) label("θ") italic
+    , angle(n,b,a) label(deg(180)-ana)
+    , angle(a,b,c) label(deg(180)+ana-anb)
+    , b draggable()
+    , c draggable()
+  ])
+],["d1": 100, "d2": 200])
+`);        
+
 });
