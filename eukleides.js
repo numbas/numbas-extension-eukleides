@@ -482,11 +482,12 @@ class Set extends Obj {
 
     path_length() {
         let t = 0;
-        for(let i=1;i<=this.points.length;i++) {
+        for(let i=1;i<this.points.length+(this.points.length>2 ? 1 : 0);i++) {
             const a = this.points[i%this.points.length];
             const b = this.points[i-1];
             t += a.distance(b);
         }
+        return t;
     }
 
     area() {
@@ -1416,12 +1417,13 @@ class Drawer {
         this.restore_default_settings();
         this.restore_local_settings();
         this.setup_frame(-2,-2,8,6,1);
+        this.settings_stack = [];
     }
 
     restore_default_settings() {
         this.global = {
             label: false,
-            label_segment: SIMPLE,
+            label_segment: NONE,
             color: BLACK,
             size: 1,
             step: 3,
@@ -1446,6 +1448,14 @@ class Drawer {
 
     restore_local_settings() {
         this.local = Object.assign({},this.global);
+    }
+
+    push_local_settings() {
+        this.settings_stack.push(this.local);
+        this.local = {...this.local};
+    }
+    pop_local_settings() {
+        this.local = this.settings_stack.pop();
     }
 
     setup_frame(min_x,min_y,max_x,max_y,scale) {
@@ -1846,7 +1856,7 @@ class CanvasDrawer extends Drawer {
     draw_mark(B,r,a,b) {
         const ctx = this.ctx;
         ctx.beginPath();
-        ctx.arc(B.x,B.y,r,a,b);
+        ctx.arc(B.x,B.y,r,a,b,0);
         ctx.stroke();
     }
 
@@ -2143,7 +2153,9 @@ class SVGDrawer extends Drawer {
         Object.entries(this.elements).forEach(([id,element]) => {
             if(!this.used_ids[id]) {
                 delete this.elements[id];
-                element.parentElement.removeChild(element);
+                for(let el of this.svg.querySelectorAll(`[data-eukleides-id="${id}"]`)) {
+                    el.parentElement.removeChild(el);
+                }
             }
         });
     }
@@ -2195,16 +2207,19 @@ class SVGDrawer extends Drawer {
     }
 
     element(name,attr,content) {
-        const id = this.idacc++;
+        const id = this.local.key || this.idacc++;
         this.used_ids[id] = true;
         const olde = this.elements[id];
         let e;
         if(olde && olde.tagName==name) {
             e = olde;
+            e.removeAttribute('transform');
         } else {
+            for(let e of this.svg.querySelectorAll(`[data-eukleides-id="${id}"]`)) {
+                e.parentElement.removeChild(e);
+            }
             e = this.doc.createElementNS('http://www.w3.org/2000/svg',name);
             e.setAttribute('data-eukleides-id',id);
-            this.svg.appendChild(e);
         }
         this.elements[id] = e;
         if(attr) {
@@ -2215,6 +2230,7 @@ class SVGDrawer extends Drawer {
         if(content!==undefined) {
             e.innerHTML = content;
         }
+        this.svg.appendChild(e);
         return e;
     }
 
@@ -2249,11 +2265,18 @@ class SVGDrawer extends Drawer {
                 e.preventDefault();
                 document.removeEventListener('mousemove',onmove);
                 document.removeEventListener('mouseup',onend);
+                document.removeEventListener('touchmove',onmove);
+                document.removeEventListener('touchend',onend);
+                document.removeEventListener('touchcancel',onend);
             }
             document.addEventListener('mousemove',onmove);
+            document.addEventListener('touchmove',onmove);
             document.addEventListener('mouseup',onend);
+            document.addEventListener('touchend',onend);
+            document.addEventListener('touchcancel',onend);
         }
         element.addEventListener('mousedown',onstart);
+        element.addEventListener('touchstart',onstart);
     }
 
     show(element) {
@@ -2267,12 +2290,13 @@ class SVGDrawer extends Drawer {
         return c;
     }
 
-    arc(x,y,r,a,b) {
+    arc(x,y,r,a,b,large_circle) {
         const d = Math.abs(b-a);
         if(d>=2*PI) {
             return this.element('circle',{cx:x,cy:y,r:r});
         } else {
-            return this.element('path',{d: `M ${dp(x+Math.cos(a)*r)} ${dp(y+Math.sin(a)*r)} A ${dp(r)} ${dp(r)} 0 ${d>=PI ? 1 : 0} ${a<0 ? 0 : 1} ${dp(x+Math.cos(b)*r)} ${dp(y+Math.sin(b)*r)}`});
+            large_circle = d>=PI ? 1 : 0;
+            return this.element('path',{d: `M ${dp(x+Math.cos(a)*r)} ${dp(y+Math.sin(a)*r)} A ${dp(r)} ${dp(r)} 0 ${large_circle} ${d<0 ? 0 : 1} ${dp(x+Math.cos(b)*r)} ${dp(y+Math.sin(b)*r)}`});
         }
     }
 
@@ -2385,7 +2409,10 @@ class SVGDrawer extends Drawer {
 
     label_point(A) {
         const text = this.local.label_text;
-        let angle = this.local.label_direction;
+        if(!text) {
+            return;
+        }
+        let angle = this.local.label_direction || 0;
         if(angle>PI) {
             angle -= 2*PI;
         }
@@ -2420,27 +2447,49 @@ class SVGDrawer extends Drawer {
         const x = (A.x+B.x)/2;
         const y = (A.y+B.y)/2;
 
-        const e = this.transform(this.element('path'), `translate(${dp(x)} ${dp(y)}) scale(${dp(size)}) rotate(${dp(RTOD(angle))})`);
-        this.set_stroke(e);
-        e.setAttribute('stroke-width',e.getAttribute('stroke-width')/size);
-        this.set_style(e);
-        let d;
-        switch(this.local.label_segment) {
-            case SIMPLE: 
-                d = `M -0.5 -1 L 0.5 1`;
-                break;
-            case DOUBLE:
-                d = `M -1 -1 L 0 1 M 0 -1 L 1 1`;
-                break;
-            case TRIPLE:
-                d = `M -1.5 -1 L -0.5 1 M -0.5 -1 L 0.5 1 M 0.5 -1 L 1.5 1`;
-                break;
+        let mark, text;
+        if(this.local.label_segment!=NONE) {
+            mark = this.transform(this.element('path'), `translate(${dp(x)} ${dp(y)}) scale(${dp(size)}) rotate(${dp(RTOD(angle))})`);
+            this.set_stroke(mark);
+            mark.setAttribute('stroke-width',mark.getAttribute('stroke-width')/size);
+            this.set_style(mark);
+            let d;
+            switch(this.local.label_segment) {
+                case SIMPLE: 
+                    d = `M -0.5 -1 L 0.5 1`;
+                    break;
+                case DOUBLE:
+                    d = `M -1 -1 L 0 1 M 0 -1 L 1 1`;
+                    break;
+                case TRIPLE:
+                    d = `M -1.5 -1 L -0.5 1 M -0.5 -1 L 0.5 1 M 0.5 -1 L 1.5 1`;
+                    break;
+            }
+            mark.setAttribute('d',d);
         }
-        e.setAttribute('d',d);
-        return e;
+        if(this.local.label_text) {
+            this.push_local_settings();
+            this.local.label_direction = argument(A,B)+PI/2;
+            const m = Point.create_midpoint(new Set([A,B]));
+            text = this.label_point(m);
+            this.pop_local_settings();
+        }
+        console.log(mark,text);
+        if(mark && text) {
+            const g = this.element('g');
+            g.appendChild(mark);
+            g.appendChild(text);
+            return g;
+        }
+        return mark || text;
     }
 
     draw_mark(B,r,a,b) {
+        [a,b] = [Math.min(a,b), Math.max(a,b)];
+        const d = b-a;
+        if(d>PI) {
+            [a,b] = [b,a+2*PI];
+        }
         const e = this.arc(B.x,B.y,r,a,b);
         this.set_stroke(e);
         return e;
@@ -2530,14 +2579,16 @@ class SVGDrawer extends Drawer {
 
     polygon(set,closed) {
         const p = this.element('path');
-        let ds = [`M ${dp(set.points[0].x)} ${dp(set.points[0].y)}`];
-        for(let p of set.points.slice(1)) {
-            ds.push(`L ${dp(p.x)} ${dp(p.y)}`);
+        if(set.points.length){ 
+            let ds = [`M ${dp(set.points[0].x)} ${dp(set.points[0].y)}`];
+            for(let p of set.points.slice(1)) {
+                ds.push(`L ${dp(p.x)} ${dp(p.y)}`);
+            }
+            if(closed) {
+                ds.push('z');
+            }
+            p.setAttribute('d',ds.join(' '));
         }
-        if(closed) {
-            ds.push('z');
-        }
-        p.setAttribute('d',ds.join(' '));
         return p;
     }
 

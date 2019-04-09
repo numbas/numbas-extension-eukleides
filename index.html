@@ -2,17 +2,19 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
+        <title>Numbas Eukleides extension</title>
         <script src="jme-runtime.js"></script>
         <script src="locales.js"></script>
+        <script src="minimize.js"></script>
         <script src="extension.js"></script>
         <script src="demo.js" type="module"></script>
         <style>
             article {
                 display: grid;
                 grid-auto-flow: column;
-                grid: auto / max-content max-content 1fr;
                 position: relative;
                 width: 100%;
+                grid: auto / minmax(min-content,1fr) 1fr;
             }
             article ~ article {
                 margin-top: 2em;
@@ -23,9 +25,10 @@
             article > pre {
                 overflow-x: auto;
                 margin-left: 1em;
+                font-size: 1.5em;
             }
 
-            canvas, svg {
+            article > canvas, article > svg {
                 border: 1px solid #ccc;
                 margin: 1em;
                 position: sticky;

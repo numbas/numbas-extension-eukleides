@@ -19,7 +19,11 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
 	var TAngle = function(angle) {
 		this.value = angle;
 	};
-    jme.registerType(TAngle,'eukleides_angle');
+    jme.registerType(TAngle,'eukleides_angle',{
+        string: function(v) {
+            return new TString(math.niceNumber(math.precround(math.degrees(v.value),2))+'°');
+        }
+    });
 
 	var TPoint = function(point) {
 		this.value = point;
@@ -72,8 +76,10 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
     jme.registerType(TAngleLabel,'eukleides_angle_label');
 
     function draw_drawing(drawer,drawing,ctx) {
-        var ostyle = drawer.local;
-        drawer.local = Numbas.util.extend_object({},ostyle,drawing.style);
+        drawer.push_local_settings();
+        Object.entries(drawing.style).forEach(function(d) {
+            drawer.local[d[0]] = d[1];
+        });
         drawing.objects.forEach(function(obj) {
             switch(obj.type) {
                 case 'eukleides_drawing':
@@ -130,13 +136,14 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                     throw(new Numbas.Error('Eukleides trying to draw unknown object type: '+obj.type));
             }
         });
-        drawer.local = ostyle;
+        drawer.pop_local_settings();
     }
 
 	var funcObj = Numbas.jme.funcObj;
 	var TString = Numbas.jme.types.TString;
 	var TNum = Numbas.jme.types.TNum;
 	var TList = Numbas.jme.types.TList;
+    var TDict = Numbas.jme.types.TDict;
 	var TBool = Numbas.jme.types.TBool;
 	var TVector = Numbas.jme.types.TVector;
 	var TRange = Numbas.jme.types.TRange;
@@ -148,7 +155,9 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
     var snum = sig.type('number');
     var snumorangle = sig.optional(sig.or(snum,sangle));
 
-    extension.scope.setVariable('O',new TPoint(new euk.Point(0,0)));
+    extension.scope.setVariable('origin',new TPoint(new euk.Point(0,0)));
+
+    extension.scope.addFunction(new funcObj('degrees',[TAngle],TNum,function(v){return math.degrees(v)}));
 
     extension.scope.addFunction(new funcObj('+',[TAngle,TAngle],TAngle,math.add),
     {description: 'Add two angles'});
@@ -190,7 +199,6 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
     },{description:'A point on the given circle at the given angle'}));
 
     extension.scope.addFunction(new funcObj('list',[TPointSet],TList,function(ps){
-        console.log(ps);
         return ps.points.map(function(p){return new TPoint(p)});
     }));
 
@@ -243,7 +251,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
     },{description:'y coordinate of a point'}));
 
     extension.scope.addFunction(new funcObj('-',[TPoint,TPoint],TVector,function(a,b) {
-        return unvec(euk.Vector.create_from_points(a,b));
+        return unvec(euk.Vector.create_from_points(b,a));
     },{description:'Vector from the first point\'s position to the second\'s'}));
 
     extension.scope.addFunction(new funcObj('vector',[TPointSet],TVector,function(set) {
@@ -358,7 +366,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return set.add_head_point(p);
     },{description:'Add a point to the start of a polygon'}));
 
-    extension.scope.addFunction(new funcObj('pointset',[sig.listof(sig.type('eukleides_point'))],TPointSet,function(points) {
+    extension.scope.addFunction(new funcObj('polygon',[sig.listof(sig.type('eukleides_point'))],TPointSet,function(points) {
         return new TPointSet(new euk.Set(points));
     },{unwrapValues: true},{description:'Construct a polygon from the given list of points'}))
 
@@ -850,7 +858,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         'closed': {close: true},
         'open': {close: false},
         'filled': {fill: true},
-        'simple': {label_segment: 'simple', angle: 'simple'},
+        'simple': {label_segment: 'simple', angle: 'simple', label:true},
         'double': {label_segment: 'double', angle: 'double'},
         'triple': {label_segment: 'triple', angle: 'triple'},
         'full': {style: 'full'},
@@ -880,19 +888,39 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
     })
 
     extension.scope.addFunction(new funcObj('draggable',[],TDrawing,function() {
-        return new TDrawing([],{draggable:true});
+        return new TDrawing([],{draggable:true, color: 'blue',size:1.5});
     }, {unwrapValues: true},{description:''}));
+
+    extension.scope.addFunction(new funcObj('draggable',[TString],TDrawing,function(key) {
+        return new TDrawing([],{draggable:true, key: key, color: 'blue',size:1.5});
+    }, {unwrapValues: true},{description:''}));
+
+    extension.scope.addFunction(new funcObj('label_length',[TPointSet],TDrawing,function(set) {
+        var m = euk.Point.create_midpoint(set);
+        var v = euk.Vector.create_from_segment(set.points);
+        var d = v.length();
+        var arg = v.argument();
+        return new TDrawing([new TPoint(m)],{label:true, label_text: math.niceNumber(d), label_direction: arg+Math.PI/2});
+    }, {unwrapValues: true},{description:'Label the length of a segment at its midpoint'}));
 
     extension.scope.addFunction(new funcObj('label',[],TDrawing,function() {
         return new TDrawing([],{label:true});
     }, {unwrapValues: true},{description:''}));
 
-    extension.scope.addFunction(new funcObj('label',[TString],TDrawing,function(text,angle) {
+    extension.scope.addFunction(new funcObj('label',[TString],TDrawing,function(text) {
         return new TDrawing([],{label:true, label_text: text, label_direction: -Math.PI/4});
     }, {unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('label',[TString,TAngle],TDrawing,function(text,angle) {
         return new TDrawing([],{label:true, label_text: text, label_direction: angle});
+    }, {unwrapValues: true},{description:''}));
+
+    extension.scope.addFunction(new funcObj('label',[TString,TAngle,TNum],TDrawing,function(text,angle,dist) {
+        return new TDrawing([],{label:true, label_text: text, label_direction: angle, label_dist: dist});
+    }, {unwrapValues: true},{description:''}));
+
+    extension.scope.addFunction(new funcObj('text',[TString],TDrawing,function(text) {
+        return new TDrawing([],{label:true, label_text: text, label_dist: 0});
     }, {unwrapValues: true},{description:''}));
 
     extension.scope.addFunction(new funcObj('angle',[TPoint,TPoint,TPoint],TAngleLabel,function(a,b,c) {
@@ -1001,8 +1029,15 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         }
     },{description:''}));
 
-    function draw_svg(drawing,min_x,min_y,max_x,max_y,svg) {
-        svg = svg || document.createElementNS('http://www.w3.org/2000/svg','svg');
+    function create_svg(title) {
+        var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+        svg.setAttribute('role','group');
+        svg.setAttribute('aria-label',title);
+        return svg;
+    }
+
+    function draw_svg(drawing,title,min_x,min_y,max_x,max_y,svg) {
+        svg = svg || create_svg(title);
         var drawer = new euk.SVGDrawer(svg,document);
         if(min_x!==undefined) {
             drawer.setup_frame(min_x,min_y,max_x,max_y,1);
@@ -1056,7 +1091,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return {min_x: min_x, min_y: min_y, max_x: max_x, max_y: max_y};
     }
 
-    function InteractiveContext(drawer,objects,scope) {
+    function InteractiveContext(drawer,objects,scope,initial_values) {
         var ctx = this;
         
         this.drawer = drawer;
@@ -1070,29 +1105,55 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
 
         this.start_time = new Date();
 
+        var all_free_vars = jme.findvars(objects);
+        var animates = all_free_vars.contains('time');
+        var takes_input = all_free_vars.find(function(n){return ['mousex','mousey'].contains(n)})!==undefined;
+
         this.free_vars = jme.findvars(objects,['time','mousex','mousey'].concat(Object.keys(ctx.scope.allVariables())));
-        this.values = this.free_vars.map(function(){return 0});
+        initial_values = initial_values || {};
+        this.values = [];
+        this.free_vars.forEach(function(n) {
+            if(initial_values[n]) {
+                ctx.values.push(jme.unwrapValue(initial_values[n]));
+            } else {
+                ctx.values.push(0);
+            }
+        });
+        this.initial_values = this.values.slice();
 
         function frame() {
             if(ctx.animating) {
                 ctx.draw();
             }
-            //requestAnimationFrame(frame);
+            if(animates) {
+                requestAnimationFrame(frame);
+            }
         }
-        drawer.svg.addEventListener('mouseover',function(e) {
-            ctx.animating = true;
-        });
-        drawer.svg.addEventListener('mouseout',function(e) {
-            ctx.animating = false;
-        });
-        drawer.svg.addEventListener('mousemove',function(e) {
-            var r = ctx.drawer.svg.getBoundingClientRect();
-            mousex = (e.clientX-r.x)/r.width*(ctx.drawer.max_x-ctx.drawer.min_x) + ctx.drawer.min_x;
-            mousey = (e.clientY-r.y)/r.height*(ctx.drawer.min_y-ctx.drawer.max_y) + ctx.drawer.max_y;
+        if(animates) {
+            drawer.svg.addEventListener('mouseover',function(e) {
+                ctx.animating = animates;
+            });
+            drawer.svg.addEventListener('mouseout',function(e) {
+                ctx.animating = false;
+            });
+        }
+        if(takes_input) {
+            drawer.svg.addEventListener('mousemove',function(e) {
+                var r = ctx.drawer.svg.getBoundingClientRect();
+                ctx.mousex = (e.clientX-r.x)/r.width*(ctx.drawer.max_x-ctx.drawer.min_x) + ctx.drawer.min_x;
+                ctx.mousey = (e.clientY-r.y)/r.height*(ctx.drawer.min_y-ctx.drawer.max_y) + ctx.drawer.max_y;
+                requestAnimationFrame(frame);
+            });
+        }
+        drawer.svg.addEventListener('dblclick',function(e) {
+            e.preventDefault();
+            ctx.values = ctx.initial_values.slice();
+            ctx.draw();
         });
         this.draw();
-        frame();
-
+        if(animates) {
+            frame();
+        }
 
         var shadow_svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
         this.optimisation_drawer = new euk.SVGDrawer(shadow_svg,document);
@@ -1147,6 +1208,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                 var cy = parseFloat(element.getAttribute('cy'));
                 return {x:cx,y:cy};
             }
+            var last_good_values = null;
             function onstart() {
                 var initial = get_position(ctx.elements);
                 function ondrag(dx,dy) {
@@ -1158,7 +1220,34 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                         var c = delta_x*delta_x + delta_y*delta_y;
                         return c;
                     }
-                    var nvalues = minimize(cost,ctx.values,true).solution;
+                    function grad(values) {
+                        return gradient(cost,values);
+                    }
+                    function gradZero(values) {
+                        return grad(values).every(function(x){return x==0});
+                    }
+                    var values = ctx.values;
+                    var low_precision = true;
+                    if(gradZero(values)) {
+                        if(last_good_values) {
+                            values = last_good_values;
+                        } else {
+                            values = ctx.initial_values;
+                        }
+                        low_precision = false;
+                    }
+                    var nvalues = minimize(cost,values,low_precision).solution;
+                    if(gradZero(nvalues)) {
+                        values.forEach(function(v,i) {
+                            nvalues[i] = findPhaseChange(function(v){
+                                var mock = nvalues.slice();
+                                mock[i] = v;
+                                return grad(mock)[i]==0;
+                            },nvalues[i],values[i]);
+                        });
+                    } else {
+                        last_good_values = nvalues;
+                    }
                     ctx.values = nvalues;
                     ctx.draw();
                 }
@@ -1168,50 +1257,13 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         }
     }
 
-    function draw_interactive_svg(objects,scope,min_x,min_y,max_x,max_y) {
-        var div = document.createElement('div');
-        this.svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-        var drawer = new euk.SVGDrawer(svg,document);
-
-        if(min_x!==undefined) {
-            drawer.setup_frame(min_x,min_y,max_x,max_y,1);
-        }
-
-        var ctx = new InteractiveContext(drawer,objects,scope);
-        div.appendChild(svg);
-
-        return div;
-    }
-
-    extension.scope.addFunction(new funcObj('draw_svg',[TNum,TNum,TNum,TNum,'*?'],THTML,null,{
-        evaluate: function(args,scope) {
-            var min_x = args[0].value;
-            var min_y = args[1].value;
-            var max_x = args[2].value;
-            var max_y = args[3].value;
-            var drawing = new TDrawing(args.slice(4));
-            var svg = draw_svg(drawing,min_x,min_y,max_x,max_y);
-            return new THTML(svg);
-        }
-    },{description:''}));
-
-    extension.scope.addFunction(new funcObj('draw_svg',['*?'],THTML,null,{
-        evaluate: function(args,scope) {
-            var drawing = new TDrawing(args);
-            var res = find_bounding_box(drawing);
-            // Now redraw the drawing, using the derived bounding box
-            var svg = draw_svg(drawing,res.min_x,res.min_y,res.max_x,res.max_y);
-
-            return new THTML(svg);
-        }
-    },{description:''}));
-
-    extension.scope.addFunction(new funcObj('draw_interactive_svg',[TNum,TNum,TNum,TNum,TDrawing],THTML,null,{
+    extension.scope.addFunction(new funcObj('draw_svg',[TString,TNum,TNum,TNum,TNum,TDrawing,TDict],THTML,null,{
         evaluate: function(args,scope) {
             var objects;
-            var min_x,min_y,max_x,max_y;
-            if(args.length==1) {
-                objects = args[0];
+            var title = scope.evaluate(args[0]).value;
+            var min_x,min_y,max_x,max_y,initial_values;
+            if(args.length==2) {
+                objects = args[1];
                 var zero = new jme.types.TNum(0);
                 var drawing = new TDrawing(objects.args.map(function(a){return scope.evaluate(a,{time: zero, mousex: zero, mousey: zero})}));
                 var res = find_bounding_box(drawing);
@@ -1220,15 +1272,30 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                 max_x = res.max_x;
                 max_y = res.max_y;
             } else {
-                min_x = scope.evaluate(args[0]).value;
-                min_y = scope.evaluate(args[1]).value;
-                max_x = scope.evaluate(args[2]).value;
-                max_y = scope.evaluate(args[3]).value;
-                objects = args[4];
+                min_x = scope.evaluate(args[1]).value;
+                min_y = scope.evaluate(args[2]).value;
+                max_x = scope.evaluate(args[3]).value;
+                max_y = scope.evaluate(args[4]).value;
+                objects = args[5];
+                if(args[6]) {
+                    initial_values = scope.evaluate(args[6]);
+                    if(initial_values.type!='dict') {
+                        throw(new Numbas.Error("The 6th argument to draw_interactive_svg must be a dictionary, not "+initial_values.type));
+                    }
+                    initial_values = initial_values.value;
+                }
             }
-            var container = draw_interactive_svg(objects,scope,min_x,min_y,max_x,max_y);
-            return new THTML(container);
+            var svg = create_svg(title);
+            var drawer = new euk.SVGDrawer(svg,document);
+
+            if(min_x!==undefined) {
+                drawer.setup_frame(min_x,min_y,max_x,max_y,1);
+            }
+
+            var ctx = new InteractiveContext(drawer,objects,scope,initial_values);
+
+            return new THTML(svg);
         }
     },{description:''}));
-    Numbas.jme.lazyOps.push('draw_interactive_svg');
+    Numbas.jme.lazyOps.push('draw_svg');
 });

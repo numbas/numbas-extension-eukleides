@@ -172,6 +172,14 @@ function minimize(f, x0, end_on_line_search,tol=1e-8,maxit=1000) {
     return {solution: x0, f: f0, gradient: g0, invHessian: H1, iterations:it, message: msg};
 }
 
+function findPhaseChange(f, known_true, known_false){
+    while(Math.abs(known_true - known_false) > 1e-3){
+        var mid = (known_true + known_false) / 2
+        f(mid) ? known_true = mid : known_false = mid
+    }
+    return (known_true + known_false) / 2
+}
+
 
 // var x = [4,26,2,8]
 // minimize(norm2, x).f *1e9
