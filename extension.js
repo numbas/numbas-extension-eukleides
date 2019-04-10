@@ -75,34 +75,62 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
 	};
     jme.registerType(TAngleLabel,'eukleides_angle_label');
 
-    function draw_drawing(drawer,drawing,ctx) {
-        drawer.push_local_settings();
-        Object.entries(drawing.style).forEach(function(d) {
-            drawer.local[d[0]] = d[1];
-        });
+    function drawing_visitor(fn) {
+        function visit(drawer,drawing,ctx) {
+            drawer.push_local_settings();
+            Object.entries(drawing.style).forEach(function(d) {
+                if(d[1]!==undefined) {
+                    drawer.local[d[0]] = d[1];
+                }
+            });
+            fn(drawer,drawing,ctx);
+            drawing.objects.forEach(function(obj) {
+                switch(obj.type) {
+                    case 'eukleides_drawing':
+                        visit(drawer,obj.value,ctx);
+                        break;
+                    case 'list':
+                        visit(drawer, {objects:obj.value, style:{}},ctx);
+                        break;
+                }
+            });
+            drawer.pop_local_settings();
+        }
+        return visit;
+    }
+
+    var get_point_labels = drawing_visitor(function(drawer,drawing) {
         drawing.objects.forEach(function(obj) {
             switch(obj.type) {
-                case 'eukleides_drawing':
-                    draw_drawing(drawer,obj.value,ctx);
+                case 'eukleides_point':
+                    if(drawer.local.label) {
+                        drawer.add_point_label(obj.value);
+                    }
                     break;
+            }
+        });
+    });
+
+    var draw_drawing = drawing_visitor(function(drawer,drawing,ctx) {
+        drawing.objects.forEach(function(obj) {
+            switch(obj.type) {
                 case 'eukleides_point':
                     if(drawer.local.label) {
                         drawer.label_point(obj.value);
                     } else {
                         var point = drawer.draw_point(obj.value);
                         if(ctx && drawer.local.draggable) {
-                            ctx.make_draggable(point);
+                            ctx.make_draggable(point, drawer.local.interactive_vars);
                         }
                     }
                     break;
                 case 'eukleides_point_set':
-                    if(drawer.local.fill) {
+                    if(drawer.local.label) {
+                        drawer.label_segment(obj.value.points[0],obj.value.points[1]);
+                    } else if(drawer.local.fill) {
                         drawer.fill_polygon(obj.value);
                     } else {
                         drawer.draw_polygon(obj.value);
-                    }
-                    if(drawer.local.label) {
-                        drawer.label_segment(obj.value.points[0],obj.value.points[1]);
                     }
                     break;
                 case 'eukleides_line':
@@ -126,18 +154,17 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                         drawer.draw_conic(obj.value);
                     }
                     break;
-                case 'list':
-                    draw_drawing(drawer, {objects:obj.value, style:{}},ctx);
-                    break;
                 case 'eukleides_angle_label':
                     drawer.label_angle(obj.a,obj.b,obj.c);
+                    break;
+                case 'eukleides_drawing':
+                case 'list':
                     break;
                 default:
                     throw(new Numbas.Error('Eukleides trying to draw unknown object type: '+obj.type));
             }
         });
-        drawer.pop_local_settings();
-    }
+    });
 
 	var funcObj = Numbas.jme.funcObj;
 	var TString = Numbas.jme.types.TString;
@@ -161,7 +188,15 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
 
     extension.scope.addFunction(new funcObj('+',[TAngle,TAngle],TAngle,math.add),
     {description: 'Add two angles'});
+    extension.scope.addFunction(new funcObj('-u',[TAngle],TAngle,math.negate),
+    {description: 'Add two angles'});
     extension.scope.addFunction(new funcObj('-',[TAngle,TAngle],TAngle,math.sub),
+    {description: 'Add two angles'});
+    extension.scope.addFunction(new funcObj('*',[TNum,TAngle],TAngle,math.mul),
+    {description: 'Add two angles'});
+    extension.scope.addFunction(new funcObj('*',[TAngle,TNum],TAngle,math.mul),
+    {description: 'Add two angles'});
+    extension.scope.addFunction(new funcObj('/',[TAngle,TNum],TAngle,math.div),
     {description: 'Add two angles'});
     extension.scope.addFunction(new funcObj('deg',[TNum],TAngle,function(degrees) {
         var rad = math.radians(degrees);
@@ -897,19 +932,15 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return new TDrawing([],{draggable:true, key: key, color: 'blue',size:1.5});
     }, {unwrapValues: true},{description:''}));
 
-    extension.scope.addFunction(new funcObj('label',[],TDrawing,function() {
-        return new TDrawing([],{label:true});
+    extension.scope.addFunction(new funcObj('draggable',[sig.listof(sig.type('string'))],TDrawing,function(names) {
+        return new TDrawing([],{draggable:true, color: 'blue',size:1.5, interactive_vars: names});
     }, {unwrapValues: true},{description:''}));
 
-    extension.scope.addFunction(new funcObj('label',[TString],TDrawing,function(text) {
-        return new TDrawing([],{label:true, label_text: text});
+    extension.scope.addFunction(new funcObj('draggable',[TString,sig.listof(sig.type('string'))],TDrawing,function(key,names) {
+        return new TDrawing([],{draggable:true, key: key, color: 'blue',size:1.5, interactive_vars: names});
     }, {unwrapValues: true},{description:''}));
 
-    extension.scope.addFunction(new funcObj('label',[TString,TAngle],TDrawing,function(text,angle) {
-        return new TDrawing([],{label:true, label_text: text, label_direction: angle});
-    }, {unwrapValues: true},{description:''}));
-
-    extension.scope.addFunction(new funcObj('label',[TString,TAngle,TNum],TDrawing,function(text,angle,dist) {
+    extension.scope.addFunction(new funcObj('label',[sig.optional(sig.or(sig.type('string'),sig.type('number'))),sig.optional(sig.type('eukleides_angle')),sig.optional(sig.type('number'))],TDrawing,function(text,angle,dist) {
         return new TDrawing([],{label:true, label_text: text, label_direction: angle, label_dist: dist});
     }, {unwrapValues: true},{description:''}));
 
@@ -1023,20 +1054,14 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         }
     },{description:''}));
 
-    function create_svg(title) {
+    var svg_acc = 0;
+    function create_svg() {
+        var id = 'eukleides-diagram-'+(svg_acc++)+'-';
         var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-        svg.setAttribute('role','group');
-        svg.setAttribute('aria-label',title);
-        return svg;
-    }
-
-    function draw_svg(drawing,title,min_x,min_y,max_x,max_y,svg) {
-        svg = svg || create_svg(title);
-        var drawer = new euk.SVGDrawer(svg,document);
-        if(min_x!==undefined) {
-            drawer.setup_frame(min_x,min_y,max_x,max_y,1);
-        }
-        draw_drawing(drawer,drawing.value);
+        svg.setAttribute('role','img');
+        var title = document.createElementNS('http://www.w3.org/2000/svg','title');
+        title.setAttribute('id',id+'title');
+        svg.appendChild(title);
         return svg;
     }
 
@@ -1046,6 +1071,9 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         var min_x = Infinity, min_y = Infinity, max_x = -Infinity, max_y = -Infinity;
         var children = Array.prototype.slice.apply(svg.children);
         children.forEach(function(c) {
+            if(!c.getBBox) {
+                return;
+            }
             var r = c.getBBox();
             var m = c.getCTM();
 
@@ -1082,10 +1110,11 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return {min_x: min_x, min_y: min_y, max_x: max_x, max_y: max_y};
     }
 
-    function InteractiveContext(drawer,objects,scope,initial_values) {
+    function InteractiveContext(drawer,title_tree,objects,scope,initial_values) {
         var ctx = this;
         
         this.drawer = drawer;
+        this.title_tree = title_tree;
         this.objects = objects;
         this.scope = scope;
         this.elements = {};
@@ -1157,7 +1186,13 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             Object.entries(vars).forEach(function(d) {
                 wrapped_vars[d[0]] = jme.wrapValue(d[1]);
             });
-            var drawing = new TDrawing(ctx.objects.args.map(function(a){return ctx.scope.evaluate(a,wrapped_vars)}));
+            var title = ctx.scope.evaluate(ctx.title_tree).value;
+            var title_el = drawer.svg.querySelector('title');
+            if(title_el) {
+                title_el.textContent = title;
+            }
+            var drawing = new TDrawing([ctx.scope.evaluate(ctx.objects,wrapped_vars)]);
+            get_point_labels(drawer,drawing.value);
             draw_drawing(drawer,drawing.value,ctx);
             drawer.after_render();
         },
@@ -1186,7 +1221,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             return this.optimisation_drawer.elements;
         },
 
-        make_draggable: function(element) {
+        make_draggable: function(element, optimise_names) {
             var ctx = this;
             var id = element.getAttribute('data-eukleides-id');
             if(this.elements[id]) {
@@ -1200,11 +1235,21 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                 return {x:cx,y:cy};
             }
             var last_good_values = null;
+            optimise_names = optimise_names || ctx.free_vars;
+            optimise_names = optimise_names.filter(function(n){ return ctx.free_vars.contains(n)});
             function onstart() {
                 var initial = get_position(ctx.elements);
                 function ondrag(dx,dy) {
+                    function fill_remaining_values(vs) {
+                        var values = ctx.values.slice();
+                        optimise_names.forEach(function(n,i) {
+                            var j = ctx.free_vars.indexOf(n);
+                            values[j] = vs[i];
+                        });
+                        return values;
+                    };
                     function cost(values) {
-                        var elements = ctx.optimisation_redraw(values);
+                        var elements = ctx.optimisation_redraw(fill_remaining_values(values));
                         var npos = get_position(elements);
                         var delta_x = npos.x-(initial.x+dx);
                         var delta_y = npos.y-(initial.y+dy);
@@ -1217,7 +1262,10 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                     function gradZero(values) {
                         return grad(values).every(function(x){return x==0});
                     }
-                    var values = ctx.values;
+                    var values = optimise_names.map(function(n) {
+                        var i = ctx.free_vars.indexOf(n);
+                        return ctx.values[i];
+                    });
                     var low_precision = true;
                     if(gradZero(values)) {
                         if(last_good_values) {
@@ -1227,7 +1275,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                         }
                         low_precision = false;
                     }
-                    var nvalues = minimize(cost,values,low_precision).solution;
+                    var nvalues = fill_remaining_values(minimize(cost,values,low_precision).solution);
                     if(gradZero(nvalues)) {
                         values.forEach(function(v,i) {
                             nvalues[i] = findPhaseChange(function(v){
@@ -1251,7 +1299,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
     extension.scope.addFunction(new funcObj('draw_svg',[TString,TNum,TNum,TNum,TNum,TDrawing,TDict],THTML,null,{
         evaluate: function(args,scope) {
             var objects;
-            var title = scope.evaluate(args[0]).value;
+            var title_tree = args[0];
             var min_x,min_y,max_x,max_y,initial_values;
             if(args.length<=3) {
                 objects = args[1];
@@ -1276,14 +1324,14 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                     initial_values = initial_values.value;
                 }
             }
-            var svg = create_svg(title);
+            var svg = create_svg();
             var drawer = new euk.SVGDrawer(svg,document);
 
             if(min_x!==undefined) {
                 drawer.setup_frame(min_x,min_y,max_x,max_y,1);
             }
 
-            var ctx = new InteractiveContext(drawer,objects,scope,initial_values,min_x===undefined);
+            var ctx = new InteractiveContext(drawer,title_tree,objects,scope,initial_values,min_x===undefined);
 
             if(min_x===undefined) {
                 var res = find_bounding_box(svg);

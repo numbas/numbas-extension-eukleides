@@ -418,32 +418,32 @@ draw_svg("Parallel lines in a circle",-3.5,-3.5,3.5,3.5,
     ,angle(b,a,o)
     ,angle(o,b,a)
     ,angle(o,c,b)
-    ,angle(c,o,b)
+    ,angle(b,o,c)
     ,a label(angle_between(b-a,o-a),argument(midpoint(o..b)-a),0.6)
     ,b label(angle_between(o-b,a-b),argument(midpoint(a..o)-b),0.6)
     ,c label(angle_between(o-c,b-c),argument(midpoint(b..o)-c),0.6)
     ,o label(angle_between(b-o,c-o),argument(midpoint(b..c)-o),0.6)
-    ,point(circ,deg(rot)) draggable()
-    ,b draggable()
+    ,a draggable("A",["rot"])
+    ,b draggable("B",["ana"])
   ])
 ],["ana":50])
 `);
 
 show_diagram(`
-draw_svg("A thing",[
+draw_svg("Bearings between A, B and C",[
   let(
-    ana, deg(d1)
-  , anb, deg(d2)
+    ana, deg(heading_1)
+  , anb, deg(heading_2)
   , a, origin
   , b, point(4,deg(90)-ana)
-  , c, point(5,deg(90)-anb)+(b-a)
+  , c, point(length_2,deg(90)-anb)+(b-a)
   , m, (a+vector(0,1))
   , n, (b+vector(0,1))
   , p, (c+vector(0,1.5)) 
   , [
       (a..b..c)
     , (a..b) label("4")
-    , (b..c) label("5")
+    , (b..c) label(length_2+"")
     , (a..c) label("x",deg(180)) italic
     , (a..m) arrow
     , (b..n) arrow
@@ -461,10 +461,10 @@ draw_svg("A thing",[
     , angle(c,a,b) label("θ") italic
     , angle(n,b,a) label(deg(180)-ana)
     , angle(a,b,c) label(deg(180)+ana-anb)
-    , b draggable()
-    , c draggable()
+    , b draggable(["heading_1"])
+    , c draggable(["heading_2"])
   ])
-],["d1": 100, "d2": 200])
+],["heading_1": 100, "heading_2": 200, "length_2": 5])
 `);        
 
 });

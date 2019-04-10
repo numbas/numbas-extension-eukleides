@@ -2,6 +2,11 @@ const {cos, sin, tan, acos, atan, atan2, PI, sqrt, abs, ceil, floor, max, min} =
 
 const EPSILON = 1e-12;
 
+function dpformat(n,dp=2) {
+    const s = n.toFixed(dp);
+    return s.replace(/\.?0*$/,'');
+}
+
 function ZERO(n) {
     return abs(n)<EPSILON;
 }
@@ -74,6 +79,10 @@ class Point extends Obj {
         super();
         this.x = x;
         this.y = y;
+    }
+
+    toString() {
+        return `(${dpformat(this.x)},${dpformat(this.y)})`;
     }
 
     static create_polar(r,a) {
@@ -221,6 +230,10 @@ class Vector extends Object {
         this.y = y;
     }
 
+    toString() {
+        return `(${dpformat(this.x)},${dpformat(this.y)})`;
+    }
+
     static create_polar(r,a) {
         return new Vector(r*cos(a), r*sin(a));
     }
@@ -295,15 +308,20 @@ class Line extends Object {
         this.x = x;
         this.y = y;
         this.a = a;
+        this.defined_by = {kind:'heading',through:new Point(x,y), heading: a};
     }
     static create_with_points(A,B) {
         if(EQL(A.x,B.x) && EQL(A.y,B.y)) {
             throw(new Error("undefined line"));
         }
-        return new Line(A.x,A.y,argument(A,B));
+        const l = new Line(A.x,A.y,argument(A,B));
+        l.defined_by = {kind: 'points', points: [A,B]};
+        return l;
     }
     static create_with_vector(O,u) {
-        return new Line(O.x,O.y,atan2(u.y,u.x));
+        const l = new Line(O.x,O.y,atan2(u.y,u.x));
+        l.defined_by = {kind: 'vector', through: O, vector: u};
+        return l;
     }
     static create_with_segment(s) {
         const [A,B] = s.points;
@@ -2148,16 +2166,27 @@ class SVGDrawer extends Drawer {
     before_render() {
         this.used_ids = {};
         this.idacc = 0;
+        this.point_labels = [];
     }
     after_render() {
         Object.entries(this.elements).forEach(([id,element]) => {
             if(!this.used_ids[id]) {
                 delete this.elements[id];
                 for(let el of this.svg.querySelectorAll(`[data-eukleides-id="${id}"]`)) {
+                    console.log('remove',el);
                     el.parentElement.removeChild(el);
                 }
             }
         });
+    }
+
+    add_point_label(p) {
+        this.point_labels.push({point: p, label: clean_label(this.local.label_text)});
+    }
+
+    label_for_point(p) {
+        const d = this.point_labels.find(d=>d.point.x==p.x && d.point.y==p.y);
+        return d ? d.label : `(${dpformat(p.x)},${dpformat(p.y)})`;
     }
 
     setup_frame(min_x,min_y,max_x,max_y,scale) {
@@ -2221,6 +2250,9 @@ class SVGDrawer extends Drawer {
             e = this.doc.createElementNS('http://www.w3.org/2000/svg',name);
             e.setAttribute('data-eukleides-id',id);
         }
+        if(name!='text') {
+            e.setAttribute('role','presentation');
+        }
         this.elements[id] = e;
         if(attr) {
             for(let [k,v] of Object.entries(attr)) {
@@ -2238,6 +2270,42 @@ class SVGDrawer extends Drawer {
         var odef = element.getAttribute('transform') || '';
         element.setAttribute('transform',[odef,def].join(' '));
         return element;
+    }
+
+    describe_style(desc) {
+        switch(this.local.style) {
+            case DOTTED:
+                desc = `dotted ${desc}`;
+                break;
+            case DASHED:
+                desc = `dashed ${desc}`;
+                break;
+        }
+        return desc;
+    }
+    
+    describe_arrows(desc) {
+        if(this.local.arrow==NONE) {
+            return desc;
+        } else if(this.local.arrow==ARROWS) {
+            desc += ' with an arrow at each end';
+        } else {
+            desc += this.local.dir==BACK ? ' with an arrow at the start' : ' with an arrow at the end';
+        }
+        return desc;
+    }
+
+    set_aria_label(element,label) {
+        if(colors.contains(this.local.color) && this.local.color != this.global.color) {
+            label = `${this.local.color} ${label}`;
+        }
+        if(this.local.opacity<1) {
+            label = `transparent ${label}`;
+        }
+        element.setAttribute('aria-label',label);
+        if(element.getAttribute('role')=='presentation') {
+            element.setAttribute('role','img');
+        }
     }
 
     handle_dragging(element,callback) {
@@ -2401,6 +2469,7 @@ class SVGDrawer extends Drawer {
                     console.error("no style");
             }
         })();
+        this.set_aria_label(element,`${this.local.shape} at ${this.label_for_point(A)}`);
         return element;
     }
 
@@ -2441,6 +2510,7 @@ class SVGDrawer extends Drawer {
         }
         e.setAttribute('dy',dy);
         e.setAttribute('text-anchor',textAlign);
+        this.set_aria_label(e,`label "${text}" at ${A}`);
         return e;
     }
 
@@ -2450,6 +2520,12 @@ class SVGDrawer extends Drawer {
         const angle = argument(A,B);
         const x = (A.x+B.x)/2;
         const y = (A.y+B.y)/2;
+
+        const g = this.element('g');
+        const s = this.draw_polygon(new Set([A,B]));
+        let desc = s.getAttribute('aria-label');
+        s.removeAttribute('aria-label');
+        g.appendChild(s);
 
         let mark, text;
         if(this.local.label_segment!=NONE) {
@@ -2461,15 +2537,19 @@ class SVGDrawer extends Drawer {
             switch(this.local.label_segment) {
                 case SIMPLE: 
                     d = `M -0.5 -1 L 0.5 1`;
+                    desc += ', marked with a dash';
                     break;
                 case DOUBLE:
                     d = `M -1 -1 L 0 1 M 0 -1 L 1 1`;
+                    desc += ', marked with two dashes';
                     break;
                 case TRIPLE:
                     d = `M -1.5 -1 L -0.5 1 M -0.5 -1 L 0.5 1 M 0.5 -1 L 1.5 1`;
+                    desc += ', marked with three dashes';
                     break;
             }
             mark.setAttribute('d',d);
+            g.appendChild(mark);
         }
         if(this.local.label_text) {
             this.push_local_settings();
@@ -2479,14 +2559,12 @@ class SVGDrawer extends Drawer {
             const m = Point.create_midpoint(new Set([A,B]));
             text = this.label_point(m);
             this.pop_local_settings();
-        }
-        if(mark && text) {
-            const g = this.element('g');
-            g.appendChild(mark);
             g.appendChild(text);
-            return g;
+            text.removeAttribute('aria-label');
+            desc += `, labelled "${this.local.label_text}"`;
         }
-        return mark || text;
+        g.setAttribute('aria-label',desc);
+        return g;
     }
 
     draw_mark(B,r,a,b) {
@@ -2510,9 +2588,15 @@ class SVGDrawer extends Drawer {
         const wiggle = (a%(2*PI)+(a<0 ? 2*PI : 0))/(4*PI)*0.2; // so angles round the same point can be distinguished
         const r = this.SIZE(0.5+wiggle);
         const s = 0.08/this.scale;
+        let mida = (b-a)/2;
+        if(mida>0) {
+            mida += PI;
+        }
         let x1,y1,x2,y2;
         const t = (8*PI/180)/this.local.size;
         const g = this.element('g');
+
+        let desc = `angle ${this.label_for_point(A)} ${this.label_for_point(B)} ${this.label_for_point(C)}`;
         switch(this.local.angle) {
             case SIMPLE:
                 g.appendChild(this.draw_mark(B,r,a,b));
@@ -2520,24 +2604,29 @@ class SVGDrawer extends Drawer {
                     case DOTTED:
                         [x1,y1,x2,y2] = this.set_xy(A,B,C,this.SIZE(Math.sqrt(2)/8));
                         g.appendChild(this.draw_dot(B.x+x1+x2,B.y+y1+y2,this.SIZE(0.05)));
+                        desc += ' marked with a dot';
                         break;
                     case DASHED:
                         g.appendChild(this.draw_dash(B.x,B.y,(a+b)/2,r-s,r+s));
+                        desc += ' marked with a dash';
                         break;
                 }
                 break;
             case DOUBLE:
                 switch(this.local.dec) {
-                    case DASHED:
-                        g.appendChild(this.draw_mark(B,r,a,b));
-                        g.appendChild(this.draw_double_dash(B.x,B.y,(a+b)/2-t/2,r+s,r-s,t));
-                        break;
                     case DOTTED:
                         g.appendChild(this.draw_mark(B,r,a,b));
                         g.appendChild(this.draw_double_dot(B.x,B.y,(a+b)/2-t,t*2,r*0.75,0.03));
+                        desc += ' marked with two dots';
+                        break;
+                    case DASHED:
+                        g.appendChild(this.draw_mark(B,r,a,b));
+                        g.appendChild(this.draw_double_dash(B.x,B.y,(a+b)/2-t/2,r+s,r-s,t));
+                        desc += ' marked with two dashes';
                         break;
                     default:
                         g.appendChild(this.draw_double_arc(B.x,B.y,r-s/2,r+s/2,a,b));
+                        desc += ' double marked';
                 }
                 break;
             case TRIPLE:
@@ -2545,13 +2634,16 @@ class SVGDrawer extends Drawer {
                     case DASHED:
                         g.appendChild(this.draw_mark(B,r,a,b));
                         g.appendChild(this.draw_triple_dash(B.x,B.y,(a+b)/2-t,r+s,r-s,t));
+                        desc += ' marked with three dashes';
                         break;
                     case DOTTED:
                         g.appendChild(this.draw_mark(B,r,a,b));
                         g.appendChild(this.draw_triple_dot(B.x,B.y,(a+b)/2-t,t*2,r*0.75,0.03));
+                        desc += ' marked with three dots';
                         break;
                     default:
                         g.appendChild(this.draw_triple_arc(B.x,B.y,r-s,r,r+s,a,b));
+                        desc += ' triple marked';
                         break;
                 }
                 break;
@@ -2563,30 +2655,31 @@ class SVGDrawer extends Drawer {
                 if(this.local.dec==DOTTED) {
                     g.appendChild(this.draw_dot(B.x+(x1+x2)/2,B.y+(y1+y2)/2,this.SIZE(0.05)));
                 }
+                desc = 'right '+desc;
                 break;
             case FORTH:
                 this.draw_mark(B,r,a,b);
                 [x1,y1,x2,y2] = this.set_xy(A,B,C,r);
                 g.appendChild(this.draw_arrow(B.x+x2,B.y+y2, a+acos(0.12/this.scale), 0.1/this.scale));
+                desc += ' clockwise';
                 break;
             case BACK:
                 this.draw_mark(B,r,a,b);
                 [x1,y1,x2,y2] = this.set_xy(A,B,C,r);
                 g.appendChild(this.draw_arrow(B.x+x1,B.y+y1, b-acos(0.12/this.scale), 0.1/this.scale));
+                desc += ' anti-clockwise';
                 break;
         }
         if(this.local.label_text) {
+            desc += ` labelled "${clean_label(this.local.label_text)}"`;
             this.push_local_settings();
-            let da = (b-a)/2;
-            if(da>0) {
-                da += PI;
-            }
-            this.local.label_direction = a + da;
+            this.local.label_direction = a + mida;
             this.local.label_dist = (r+2*s)*this.scale;
             const text = this.label_point(B);
             g.appendChild(text);
             this.pop_local_settings();
         }
+        this.set_aria_label(g,desc);
         return g;
     }
 
@@ -2609,6 +2702,13 @@ class SVGDrawer extends Drawer {
         const p = this.polygon(set, set.points.length>2 && this.local.arrow==NONE && this.local.close);
         this.set_stroke(p);
         this.set_style(p);
+        let desc;
+        if(set.points.length==2) {
+            desc = `line segment from ${this.label_for_point(set.points[0])} to ${this.label_for_point(set.points[1])}`;
+        } else {
+            desc = `${this.local.close ? 'polygon outline ' : 'path '} through vertices ${set.points.map(p=>this.label_for_point(p)).join(', ')}`;
+        }
+        desc = this.describe_style(desc);
         if(this.local.arrow != NONE && set.points.length>=2) {
             const g = this.element('g');
             g.appendChild(p);
@@ -2620,8 +2720,11 @@ class SVGDrawer extends Drawer {
                 const [p3,p4] = [set.points[set.points.length-2], set.points[set.points.length-1]];
                 g.appendChild(this.draw_arrow(p4.x,p4.y,argument(p3,p4),this.SIZE(0.1)));
             }
+            desc = this.describe_arrows(desc);
+            this.set_aria_label(p,desc);
             return g;
         } else {
+            this.set_aria_label(p,desc);
             return p;
         }
     }
@@ -2629,12 +2732,15 @@ class SVGDrawer extends Drawer {
     fill_polygon(set) {
         const p = this.polygon(set,true);
         this.set_fill(p);
+        this.set_aria_label(p,`filled polygon through vertices ${set.points.map(p=>this.label_for_point(p)).join(', ')}`);
         return p;
     }
 
     draw_line(l) {
         let m_x=this.min_x, m_y = this.min_y, M_x = this.max_x, M_y = this.max_y;
+        let desc = 'line';
         if(this.local.part==HALF) {
+            desc = 'ray';
             if((this.local.dir==FORTH && (l.a> -PI/2 && l.a <= PI/2)) || (this.local.dir==BACK && (l.a<= -PI/2 || l.a > PI/2))) {
                 m_x = l.x;
             } else {
@@ -2692,6 +2798,19 @@ class SVGDrawer extends Drawer {
         }
         if(i==2) {
             const p = this.element('line',{x1:x[0],y1:y[0],x2:x[1],y2:y[1]});
+            switch(l.defined_by.kind) {
+                case 'heading':
+                    desc = `${desc} through ${this.label_for_point(l)} with heading ${dpformat(RTOD(l.a))}°`;
+                    break;
+                case 'points':
+                    desc = `${desc} through ${this.label_for_point(l.defined_by.points[0])} and ${this.label_for_point(l.defined_by.points[1])}`;
+                    break;
+                case 'vector':
+                    desc = `${desc} through ${this.label_for_point(l)} with vector ${l.defined_by.vector}`;
+                    break;
+            }
+            desc = this.describe_style(desc);
+            this.set_aria_label(p,desc);
             this.set_stroke(p);
             this.set_style(p);
             return p;
@@ -2703,25 +2822,37 @@ class SVGDrawer extends Drawer {
         const e = this.element('circle',{cx:c.x,cy:c.y,r:c.r});
         this.set_stroke(e);
         this.set_style(e);
+        let desc = `circle centred at ${this.label_for_point(c)} with radius ${dpformat(c.r)}`;
+        desc = this.describe_style(desc);
+        this.set_aria_label(e,desc);
         return e;
     }
 
     draw_arc(c,a,b) {
-        const arc = this.arc(c.x,c.y,c.r,a,b);
+        const arc = this.arc(c.x,c.y,c.r,b,a);
         this.set_stroke(arc);
         this.set_style(arc);
+        let desc = `arc centred at ${this.label_for_point(c)} with radius ${dpformat(c.r)} between ${dpformat(RTOD(a))}° and ${dpformat(RTOD(b))}°`;
+        desc = this.describe_style(desc);
         if(this.local.arrow!=NONE) {
             const g = this.element('g');
             g.appendChild(arc);
             const d = acos(this.SIZE(.06)/c.r);
             if(this.local.dir == BACK || this.local.arrow == ARROWS) {
-                g.appendChild(this.draw_arrow(c.x+c.r*cos(a), c.y+c.r*sin(a), a-d, this.SIZE(0.1)));
-            }
-            if(this.local.dir == FORTH || this.local.arrow == ARROWS) {
                 g.appendChild(this.draw_arrow(c.x+c.r*cos(b), c.y+c.r*sin(b), b+d, this.SIZE(0.1)));
             }
+            if(this.local.dir == FORTH || this.local.arrow == ARROWS) {
+                g.appendChild(this.draw_arrow(c.x+c.r*cos(a), c.y+c.r*sin(a), a-d, this.SIZE(0.1)));
+            }
+            if(this.local.arrow==ARROWS) {
+                desc += ' with an arrow at each end';
+            } else {
+                desc += this.local.dir==BACK ? ' anti-clockwise' : ' clockwise';
+            }
+            this.set_aria_label(g,desc);
             return g;
         } else {
+            this.set_aria_label(arc,desc);
             return arc;
         }
     }
@@ -2729,6 +2860,8 @@ class SVGDrawer extends Drawer {
     fill_circle(c) {
         const e = this.element('circle',{cx:c.x,cy:c.y,r:c.r});
         this.set_fill(e);
+        let desc = `filled circle centred at ${this.label_for_point(c)} with radius ${dpformat(c.r)}`;
+        this.set_aria_label(e,desc);
         return e;
     }
 
@@ -2744,6 +2877,9 @@ class SVGDrawer extends Drawer {
         const path = this.element('path',{d:ds.join(' ')});
         this.set_stroke(path);
         this.set_style(path);
+        let desc = `parabola`;
+        desc = this.describe_style(desc);
+        this.set_aria_label(path,desc);
         return path;
     }
 
@@ -2756,6 +2892,9 @@ class SVGDrawer extends Drawer {
         const path = this.element('path',{d:ds.join(' ')});
         this.set_stroke(path);
         this.set_style(path);
+        let desc = 'ellipse';
+        desc = this.describe_style(desc);
+        this.set_aria_label(path,desc);
         return path;
     }
 
@@ -2770,6 +2909,9 @@ class SVGDrawer extends Drawer {
         const path = this.element('path',{d:ds.join(' ')});
         this.set_stroke(path);
         this.set_style(path);
+        let desc = 'hyperbola';
+        desc = this.describe_style(desc);
+        this.set_aria_label(path,desc);
         return path;
     }
 }
