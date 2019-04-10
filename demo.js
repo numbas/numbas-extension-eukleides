@@ -151,34 +151,30 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
 ])`);
 
     show_diagram(`draw_svg("Feuerbach's circle",[
-    let(t,triangle(),
-        let(a,t[0],b,t[1],c,t[2],
-        let(
-            a',projection(a,line(b,c)),
-            b',projection(b,line(c,a)),
-            c',projection(c,line(a,b)),
-        let(
-            a_0,midpoint(b..c),
-            b_0,midpoint(c..a),
-            c_0,midpoint(a..b),
-            
-            [
-                a label("A",deg(-135)) bold,
-                b label("B",deg(-45)) italic,
-                c label("C",deg(90)) bold italic,
-                a',b',c',
-                a' label("A'",deg(45)) font("sans-serif"),
-                b' label("B'",deg(135)),
-                c' label("C'",deg(-90)),
-                a_0,b_0,c_0,
-                a_0 label("A_0",deg(30)),
-                b_0 label("B_0",deg(150)),
-                c_0 label("C_0",deg(-90)),
-                (a..b..c),
-                circle(a',b',c'),
-                ([a..a', b..b', c..c']) dashed
-            ]
-        )))
+    let([a,b,c],triangle(),
+        a',projection(a,line(b,c)),
+        b',projection(b,line(c,a)),
+        c',projection(c,line(a,b)),
+        a_0,midpoint(b..c),
+        b_0,midpoint(c..a),
+        c_0,midpoint(a..b),
+        
+        [
+            a label("A",deg(-135)) bold,
+            b label("B",deg(-45)) italic,
+            c label("C",deg(90)) bold italic,
+            a',b',c',
+            a' label("A'",deg(45)) font("sans-serif"),
+            b' label("B'",deg(135)),
+            c' label("C'",deg(-90)),
+            a_0,b_0,c_0,
+            a_0 label("A_0",deg(30)),
+            b_0 label("B_0",deg(150)),
+            c_0 label("C_0",deg(-90)),
+            (a..b..c),
+            circle(a',b',c'),
+            ([a..a', b..b', c..c']) dashed
+        ]
     )
 ])`);
 
@@ -275,20 +271,21 @@ circle(point(2,deg(30)),3)
 ])`);
 
     show_diagram(`draw_svg("Interactive plot of sine curve",
--1,-1.7,2*pi+1,2,
+-2,-1.7,2*pi+1,2,
 [
 let(
   x,clamp(rx,0,2pi),
   area,y*(1-cos(x)),
   curve,polygon(map(point(x,sin(x)*y),x,0..x#0.2)+[point(x,sin(x)*y)]),
   [
-    (point(0,y)..point(2*pi+0.2,y)) dashed gray,
-    (curve..point(x,0)) filled transparent,
-    curve open,
-    (point(0,0)..point(2*pi+0.2,0)) arrow,
+    (point(0,y)..point(2*pi+0.2,y)) dashed gray description("Horizontal line showing amplitude of the curve"),
+    (curve..point(x,0)) filled transparent description("Area under the curve"),
+    curve open description("Plot of sin(x)"),
+    (point(0,0)..point(2*pi+0.2,0)) arrow description("x axis"),
     point(pi,y) label("Area: "+dpformat(area,2),deg(90)),
     point(x,0) label("x = "+dpformat(x,2),deg(sgn(y)*if(x>pi,90,-90))),
     point(x,0) draggable() size(2) blue,
+    point(-0.5,y) label("y = "+dpformat(y,2),deg(180)),
     point(-0.5,y) draggable() size(2) blue
   ]
 )
@@ -338,16 +335,12 @@ show_diagram(`
       [
         a..b..c,
         (c..h) dashed transparent,
-        ((c..h)+vector(0.25,0)) arrows gray,
-        midpoint(c..h) label("1.00",deg(0),0.45),
-        ((a..h)-vector(0,0.25)) arrows gray,
-        midpoint(a..h) label(dpformat(x,2),deg(-90),0.45),
-        angle(b,a,c) if(90|precround(theta,0),right,simple),
-        a label(deg(precround(theta,0)),deg(theta/2),0.8) size(0.7),
-        angle(c,b,a) if(90|precround(theta2,0),right,simple),
-        b label(deg(precround(theta2,0)),deg(180-theta2/2),0.8) size(0.7),
+        ((c..h)+vector(0.25,0)) arrows gray label("1.00"),
+        ((a..h)-vector(0,0.25)) arrows gray label(dpformat(x,2),deg(-90)),
+        angle(b,a,c) if(90|precround(theta,0),right,simple) label(deg(precround(theta,0))),
+        angle(c,b,a) if(90|precround(theta2,0),right,simple) label(deg(precround(theta2,0))),
         h draggable(),
-        c draggable() blue
+        c draggable()
       ]
     )
     ],
@@ -415,14 +408,10 @@ draw_svg("Parallel lines in a circle",-3.5,-3.5,3.5,3.5,
     ,a label("A",deg(rot)) italic
     ,b label("B",deg(anb+rot)) italic
     ,c label("C",deg(130+rot)) italic
-    ,angle(b,a,o)
-    ,angle(o,b,a)
-    ,angle(o,c,b)
-    ,angle(b,o,c)
-    ,a label(angle_between(b-a,o-a),argument(midpoint(o..b)-a),0.6)
-    ,b label(angle_between(o-b,a-b),argument(midpoint(a..o)-b),0.6)
-    ,c label(angle_between(o-c,b-c),argument(midpoint(b..o)-c),0.6)
-    ,o label(angle_between(b-o,c-o),argument(midpoint(b..c)-o),0.6)
+    ,angle(b,a,o) label(angle_between(b-a,o-a))
+    ,angle(o,b,a) label(angle_between(o-b,a-b))
+    ,angle(o,c,b) label(angle_between(o-c,b-c))
+    ,angle(b,o,c) label(angle_between(b-o,c-o))
     ,a draggable("A",["rot"])
     ,b draggable("B",["ana"])
   ])
@@ -466,5 +455,17 @@ draw_svg("Bearings between A, B and C",[
   ])
 ],["heading_1": 100, "heading_2": 200, "length_2": 5])
 `);        
+
+show_diagram(`
+draw_svg("Circle inscribed in a square",let(
+  s,polygon(square())
+, a,isobarycenter(s)
+, c,circle(a,len(s[1]-s[0])/2)
+, [
+    s description("square")
+  , c description("circle inscribed in square")
+  ]
+)) 
+`);
 
 });

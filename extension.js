@@ -911,7 +911,9 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         'arrows': {arrow: 'arrows'},
         'transparent': {opacity: 0.5},
         'bold': {bold: true},
-        'italic': {italic: true}
+        'italic': {italic: true},
+        'verbose': {aria_mode: 'verbose'},
+        'nospoilers': {aria_mode: 'nospoilers'}
     }
 
     euk.colors.forEach(function(color) {
@@ -943,6 +945,10 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
     extension.scope.addFunction(new funcObj('label',[sig.optional(sig.or(sig.type('string'),sig.type('number'))),sig.optional(sig.type('eukleides_angle')),sig.optional(sig.type('number'))],TDrawing,function(text,angle,dist) {
         return new TDrawing([],{label:true, label_text: text, label_direction: angle, label_dist: dist});
     }, {unwrapValues: true},{description:''}));
+
+    extension.scope.addFunction(new funcObj('description',[TString],TDrawing,function(description) {
+        return new TDrawing([],{description: description});
+    },{unwrapValues: true},{description:'Set the accessible description for the object being drawn'}));
 
     extension.scope.addFunction(new funcObj('text',[TString],TDrawing,function(text) {
         return new TDrawing([],{label:true, label_text: text, label_dist: 0});
@@ -1228,6 +1234,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                 return;
             }
             this.elements[id] = element;
+            element.setAttribute('tabindex',"1");
             function get_position(elements) {
                 var element = elements[id];
                 var cx = parseFloat(element.getAttribute('cx'));

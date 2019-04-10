@@ -1442,6 +1442,7 @@ class Drawer {
         this.global = {
             label: false,
             label_segment: NONE,
+            aria_mode: NOSPOILERS,
             color: BLACK,
             size: 1,
             step: 3,
@@ -1584,6 +1585,8 @@ const arrows = ["none","arrow","arrows"];
 const [NONE,ARROW,ARROWS] = arrows;
 const colors = ['black','darkgray','gray','lightgray','white','red','green','blue','cyan','magenta','yellow'];
 const [BLACK,DARKGRAY,GRAY,LIGHTGRAY,WHITE,RED,GREEN,BLUE,CYAN,MAGENTA,YELLOW] = colors;
+const aria_modes = ['verbose','nospoilers'];
+const [VERBOSE,NOSPOILERS] = aria_modes;
 
 class CanvasDrawer extends Drawer {
     constructor(canvas,width) {
@@ -2173,7 +2176,6 @@ class SVGDrawer extends Drawer {
             if(!this.used_ids[id]) {
                 delete this.elements[id];
                 for(let el of this.svg.querySelectorAll(`[data-eukleides-id="${id}"]`)) {
-                    console.log('remove',el);
                     el.parentElement.removeChild(el);
                 }
             }
@@ -2184,6 +2186,14 @@ class SVGDrawer extends Drawer {
         this.point_labels.push({point: p, label: clean_label(this.local.label_text)});
     }
 
+    has_label_for_point(p) {
+        if(this.aria_mode==VERBOSE) {
+            return true;
+        }
+        const d = this.point_labels.find(d=>d.point.x==p.x && d.point.y==p.y);
+        return d;
+    }
+    
     label_for_point(p) {
         const d = this.point_labels.find(d=>d.point.x==p.x && d.point.y==p.y);
         return d ? d.label : `(${dpformat(p.x)},${dpformat(p.y)})`;
@@ -2301,6 +2311,9 @@ class SVGDrawer extends Drawer {
         }
         if(this.local.opacity<1) {
             label = `transparent ${label}`;
+        }
+        if(this.local.description!==undefined) {
+            label = this.local.description;
         }
         element.setAttribute('aria-label',label);
         if(element.getAttribute('role')=='presentation') {
@@ -2469,7 +2482,14 @@ class SVGDrawer extends Drawer {
                     console.error("no style");
             }
         })();
-        this.set_aria_label(element,`${this.local.shape} at ${this.label_for_point(A)}`);
+        let desc = this.local.shape;
+        if(this.local.draggable) {
+            desc = `draggable ${desc}`;
+        }
+        if(this.has_label_for_point(A)) {
+            desc += ` at ${this.label_for_point(A)}`;
+        }
+        this.set_aria_label(element,desc);
         return element;
     }
 
@@ -2510,7 +2530,11 @@ class SVGDrawer extends Drawer {
         }
         e.setAttribute('dy',dy);
         e.setAttribute('text-anchor',textAlign);
-        this.set_aria_label(e,`label "${text}" at ${A}`);
+        let desc = `label "${clean_label(text)}"`;
+        if(this.aria_mode==VERBOSE) {
+            desc += ` at ${A}`;
+        } 
+        this.set_aria_label(e,desc);
         return e;
     }
 
@@ -2523,8 +2547,7 @@ class SVGDrawer extends Drawer {
 
         const g = this.element('g');
         const s = this.draw_polygon(new Set([A,B]));
-        let desc = s.getAttribute('aria-label');
-        s.removeAttribute('aria-label');
+        let desc = s.getAttribute('aria-label') || '';
         g.appendChild(s);
 
         let mark, text;
@@ -2596,7 +2619,10 @@ class SVGDrawer extends Drawer {
         const t = (8*PI/180)/this.local.size;
         const g = this.element('g');
 
-        let desc = `angle ${this.label_for_point(A)} ${this.label_for_point(B)} ${this.label_for_point(C)}`;
+        let desc = 'angle';
+        if(this.has_label_for_point(A) && this.has_label_for_point(B) && this.has_label_for_point(C)) {
+            desc += ` ${this.label_for_point(A)} ${this.label_for_point(B)} ${this.label_for_point(C)}`;
+        }
         switch(this.local.angle) {
             case SIMPLE:
                 g.appendChild(this.draw_mark(B,r,a,b));
@@ -2652,10 +2678,11 @@ class SVGDrawer extends Drawer {
                 const p = this.element('path',{d:`M ${dp(B.x+x1)} ${dp(B.y+y1)} l ${dp(x2)} ${dp(y2)} l ${dp(-x1)} ${dp(-y1)}`});
                 this.set_stroke(p);
                 g.appendChild(p);
+                desc = 'right '+desc;
                 if(this.local.dec==DOTTED) {
                     g.appendChild(this.draw_dot(B.x+(x1+x2)/2,B.y+(y1+y2)/2,this.SIZE(0.05)));
+                    desc += ' marked with a dot';
                 }
-                desc = 'right '+desc;
                 break;
             case FORTH:
                 this.draw_mark(B,r,a,b);
@@ -2704,9 +2731,17 @@ class SVGDrawer extends Drawer {
         this.set_style(p);
         let desc;
         if(set.points.length==2) {
-            desc = `line segment from ${this.label_for_point(set.points[0])} to ${this.label_for_point(set.points[1])}`;
+            desc = `line segment`;
+            if(this.has_label_for_point(set.points[0]) && this.has_label_for_point(set.points[1])) {
+                desc += ` from ${this.label_for_point(set.points[0])} to ${this.label_for_point(set.points[1])}`;
+            }
         } else {
-            desc = `${this.local.close ? 'polygon outline ' : 'path '} through vertices ${set.points.map(p=>this.label_for_point(p)).join(', ')}`;
+            desc = this.local.close ? 'polygon' : 'path';
+            if(set.points.every(p=>this.has_label_for_point(p))) {
+                desc += ` through ${set.points.map(p=>this.label_for_point(p)).join(', ')}`;
+            } else {
+                desc += ` through ${set.points.length} vertices`;
+            }
         }
         desc = this.describe_style(desc);
         if(this.local.arrow != NONE && set.points.length>=2) {
@@ -2721,7 +2756,7 @@ class SVGDrawer extends Drawer {
                 g.appendChild(this.draw_arrow(p4.x,p4.y,argument(p3,p4),this.SIZE(0.1)));
             }
             desc = this.describe_arrows(desc);
-            this.set_aria_label(p,desc);
+            this.set_aria_label(g,desc);
             return g;
         } else {
             this.set_aria_label(p,desc);
@@ -2732,7 +2767,13 @@ class SVGDrawer extends Drawer {
     fill_polygon(set) {
         const p = this.polygon(set,true);
         this.set_fill(p);
-        this.set_aria_label(p,`filled polygon through vertices ${set.points.map(p=>this.label_for_point(p)).join(', ')}`);
+        let desc = 'filled polygon';
+        if(set.points.every(p=>this.has_label_for_point(p))) {
+            desc += ` through vertices ${set.points.map(p=>this.label_for_point(p)).join(', ')}`;
+        } else {
+            desc += ` through ${set.points.length} vertices`;
+        }
+        this.set_aria_label(p,desc);
         return p;
     }
 
@@ -2800,13 +2841,26 @@ class SVGDrawer extends Drawer {
             const p = this.element('line',{x1:x[0],y1:y[0],x2:x[1],y2:y[1]});
             switch(l.defined_by.kind) {
                 case 'heading':
-                    desc = `${desc} through ${this.label_for_point(l)} with heading ${dpformat(RTOD(l.a))}°`;
+                    if(this.has_label_for_point(l)) {
+                        desc += ` through ${this.label_for_point(l)}`;
+                    }
+                    if(this.aria_mode==VERBOSE) {
+                        desc += ` with heading ${dpformat(RTOD(l.a))}°`;
+                    }
                     break;
                 case 'points':
-                    desc = `${desc} through ${this.label_for_point(l.defined_by.points[0])} and ${this.label_for_point(l.defined_by.points[1])}`;
+                    const lps = l.defined_by.points.filter(p=>this.has_label_for_point(p));
+                    if(lps.length>0) {
+                        desc += ` through ${lps.join(' and ')}`;
+                    }
                     break;
                 case 'vector':
-                    desc = `${desc} through ${this.label_for_point(l)} with vector ${l.defined_by.vector}`;
+                    if(this.has_label_for_point(l)) {
+                        desc += ` through ${this.label_for_point(l)}`;
+                    }
+                    if(this.aria_mode==VERBOSE) {
+                        desc += ` with vector ${l.defined_by.vector}`;
+                    }
                     break;
             }
             desc = this.describe_style(desc);
@@ -2822,7 +2876,13 @@ class SVGDrawer extends Drawer {
         const e = this.element('circle',{cx:c.x,cy:c.y,r:c.r});
         this.set_stroke(e);
         this.set_style(e);
-        let desc = `circle centred at ${this.label_for_point(c)} with radius ${dpformat(c.r)}`;
+        let desc = 'circle';
+        if(this.has_label_for_point(c)) {
+            desc += ` centred at ${this.label_for_point(c)}`;
+        }
+        if(this.aria_mode==VERBOSE) {
+            desc += ` with radius ${dpformat(c.r)}`;
+        }
         desc = this.describe_style(desc);
         this.set_aria_label(e,desc);
         return e;
@@ -2832,7 +2892,13 @@ class SVGDrawer extends Drawer {
         const arc = this.arc(c.x,c.y,c.r,b,a);
         this.set_stroke(arc);
         this.set_style(arc);
-        let desc = `arc centred at ${this.label_for_point(c)} with radius ${dpformat(c.r)} between ${dpformat(RTOD(a))}° and ${dpformat(RTOD(b))}°`;
+        let desc = 'arc';
+        if(this.has_label_for_point(c)) {
+            desc += ` centred at ${this.label_for_point(c)}`;
+        }
+        if(this.aria_mode==VERBOSE) {
+            desc += ` with radius ${dpformat(c.r)} between ${dpformat(RTOD(a))}° and ${dpformat(RTOD(b))}°`;
+        }
         desc = this.describe_style(desc);
         if(this.local.arrow!=NONE) {
             const g = this.element('g');
@@ -2860,7 +2926,13 @@ class SVGDrawer extends Drawer {
     fill_circle(c) {
         const e = this.element('circle',{cx:c.x,cy:c.y,r:c.r});
         this.set_fill(e);
-        let desc = `filled circle centred at ${this.label_for_point(c)} with radius ${dpformat(c.r)}`;
+        let desc = 'filled circle';
+        if(this.has_label_for_point(c)) {
+            desc += ` centred at ${this.label_for_point(c)}`;
+        }
+        if(this.aria_mode==VERBOSE) {
+            desc += ` with radius ${dpformat(c.r)}`;
+        }
         this.set_aria_label(e,desc);
         return e;
     }
