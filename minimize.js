@@ -95,7 +95,7 @@ function isZero(a){
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-function gradient(f,x) {
+export function gradient(f,x) {
     var dim = x.length, f1 = f(x);
     if(isNaN(f1)) throw new Error('The gradient at ['+x.join(' ')+'] is NaN!');
     var {max, abs, min} = Math
@@ -126,7 +126,7 @@ function gradient(f,x) {
     return grad;
 }
 
-function minimize(f, x0, end_on_line_search,tol=1e-8,maxit=1000) {
+export function minimize(f, x0, end_on_line_search,tol=1e-8,maxit=1000) {
 
 
     tol = Math.max(tol,2e-16);
@@ -172,7 +172,7 @@ function minimize(f, x0, end_on_line_search,tol=1e-8,maxit=1000) {
     return {solution: x0, f: f0, gradient: g0, invHessian: H1, iterations:it, message: msg};
 }
 
-function findPhaseChange(f, known_true, known_false){
+export function findPhaseChange(f, known_true, known_false){
     while(Math.abs(known_true - known_false) > 1e-3){
         var mid = (known_true + known_false) / 2
         f(mid) ? known_true = mid : known_false = mid

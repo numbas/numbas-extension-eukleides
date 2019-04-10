@@ -1227,7 +1227,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                         return c;
                     }
                     function grad(values) {
-                        return gradient(cost,values);
+                        return euk.gradient(cost,values);
                     }
                     function gradZero(values) {
                         return grad(values).every(function(x){return x==0});
@@ -1245,10 +1245,10 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                         }
                         low_precision = false;
                     }
-                    var nvalues = fill_remaining_values(minimize(cost,values,low_precision).solution);
+                    var nvalues = fill_remaining_values(euk.minimize(cost,values,low_precision).solution);
                     if(gradZero(nvalues)) {
                         values.forEach(function(v,i) {
-                            nvalues[i] = findPhaseChange(function(v){
+                            nvalues[i] = euk.findPhaseChange(function(v){
                                 var mock = nvalues.slice();
                                 mock[i] = v;
                                 return grad(mock)[i]==0;

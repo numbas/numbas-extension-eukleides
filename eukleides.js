@@ -1,4 +1,5 @@
 const {cos, sin, tan, acos, atan, atan2, PI, sqrt, abs, ceil, floor, max, min} = Math;
+import {minimize, gradient, findPhaseChange} from './minimize.js';
 
 const EPSILON = 1e-12;
 
@@ -2433,5 +2434,6 @@ export {
     circle_set_intersection,
     TriangleMaker, QuadrilateralMaker,
     Drawer, SVGDrawer,
-    labels, styles, shapes, parts, dirs, arrows, colors
+    labels, styles, shapes, parts, dirs, arrows, colors,
+    minimize, gradient, findPhaseChange
 };
