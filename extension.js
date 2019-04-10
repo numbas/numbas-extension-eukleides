@@ -1,5 +1,6 @@
 Numbas.addExtension('eukleides',['math','jme'], function(extension) {
 
+    var euk = eukleides;
     var math = Numbas.math;
     var jme = Numbas.jme;
 

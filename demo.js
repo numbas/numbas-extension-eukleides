@@ -1,6 +1,7 @@
 import * as euk from './eukleides.js';
-import {Point,Line,Circle,Set,TriangleMaker,Vector} from './eukleides.js';
-window.euk = euk;
+window.eukleides = euk;
+
+window.run_demo = function() {
 
 const {PI} = Math;
 
@@ -458,3 +459,4 @@ points,map(point(2,deg(x)),x,0..360#step),
 ])`);
 
 });
+}

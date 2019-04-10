@@ -1,5 +1,5 @@
 import * as euk from './eukleides.js';
-window.euk = euk;
+window.eukleides = euk;
 
 const nice_type_names = {
     'eukleides_angle': 'angle',
