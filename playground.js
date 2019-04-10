@@ -72,7 +72,6 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
     })
     document.getElementById('function-definitions').innerHTML = fn_html;
 
-    const canvas_size = 900;
     const code = document.getElementById('code');
     const output = document.getElementById('output');
     const error_display = document.getElementById('error');

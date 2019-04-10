@@ -1023,43 +1023,6 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         }
     },{description:''}))
 
-    extension.scope.addFunction(new funcObj('draw_canvas',[TNum,TNum,TNum,TNum,TNum,'*?'],THTML,null,{
-        evaluate: function(args,scope) {
-            var width = args[0].value;
-            var min_x = args[1].value;
-            var min_y = args[2].value;
-            var max_x = args[3].value;
-            var max_y = args[4].value;
-            var canvas = document.createElement('canvas');
-            var drawer = new euk.CanvasDrawer(canvas,width);
-            drawer.setup_frame(min_x,min_y,max_x,max_y,1);
-            var drawing = new TDrawing(args.slice(5));
-            draw_drawing(drawer,drawing.value);
-            return new THTML(canvas);
-        }
-    },{description:''}));
-
-    extension.scope.addFunction(new funcObj('draw_canvas',[TNum,'*?'],THTML,null,{
-        evaluate: function(args,scope) {
-            var width = args[0].value;
-            var canvas = document.createElement('canvas');
-            var drawer = new euk.CanvasDrawer(canvas,width);
-            var drawing = new TDrawing(args.slice(1));
-            draw_drawing(drawer,drawing.value);
-            return new THTML(canvas);
-        }
-    },{description:''}));
-
-    extension.scope.addFunction(new funcObj('draw_canvas',['*?'],THTML,null,{
-        evaluate: function(args,scope) {
-            var canvas = document.createElement('canvas');
-            var drawer = new euk.CanvasDrawer(canvas);
-            var drawing = new TDrawing(args);
-            draw_drawing(drawer,drawing.value);
-            return new THTML(canvas);
-        }
-    },{description:''}));
-
     var svg_acc = 0;
     function create_svg() {
         var id = 'eukleides-diagram-'+(svg_acc++)+'-';
@@ -1303,7 +1266,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         }
     }
 
-    extension.scope.addFunction(new funcObj('draw_svg',[TString,TNum,TNum,TNum,TNum,TDrawing,TDict],THTML,null,{
+    extension.scope.addFunction(new funcObj('eukleides',[TString,TNum,TNum,TNum,TNum,TDrawing,TDict],THTML,null,{
         evaluate: function(args,scope) {
             var objects;
             var title_tree = args[0];
@@ -1348,5 +1311,5 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             return new THTML(svg);
         }
     },{description:''}));
-    Numbas.jme.lazyOps.push('draw_svg');
+    Numbas.jme.lazyOps.push('eukleides');
 });

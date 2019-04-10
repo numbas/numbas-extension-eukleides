@@ -87,27 +87,8 @@ body.error #error {
     <body>
         <div id="error"></div>
         <textarea id="code">
-draw_interactive_svg(-2,-4,5,4,[
-  let(theta,argument(vector(mousex,mousey)),
-      a,point(circle(O,1),theta),
-      b,point(circle(O,1),theta+deg(120)),
-      c,point(circle(O,1),theta+deg(240)),
-      [a..b..c, circle(a,b,c), a label("Mouse",theta)]
-  ),
-  let(
-    t, 5*time,
-    hours, t,
-    seconds, 60*t,
-    centre, vector(3,0),
-    O, O+centre,
-    h1, point(0.5,deg(90-hours))+centre,
-    h2, point(0.7,deg(90-seconds))+centre,
-    [
-      circle(O,1),
-      O..h1,
-      O..h2
-    ]
-  )
+eukleides("A diagram",[
+triangle()
 ])
         </textarea>
         <div id="output">
