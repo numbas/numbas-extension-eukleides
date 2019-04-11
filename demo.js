@@ -70,9 +70,9 @@ let(
     (point(0,0)..point(2*pi+0.2,0)) arrow description("x axis"),
     point(pi,y) label("Area: "+dpformat(area,2),deg(90)),
     point(x,0) label("x = "+dpformat(x,2),deg(sgn(y)*if(x>pi,90,-90))),
-    point(x,0) draggable() size(2) blue,
+    point(x,0) draggable() size(2),
     point(-0.5,y) label("y = "+dpformat(y,2),deg(180)),
-    point(-0.5,y) draggable() size(2) blue
+    point(-0.5,y) draggable() size(2)
   ]
 )
 ],
@@ -260,17 +260,110 @@ eukleides("Bearings between A, B and C",[
     show_diagram(`eukleides("Touching squares",[
     let(
         [a,b,c,d],square(),
-        (a..b..c..d) hsl(0,0.5,0.9)
+        (a..b..c..d) lightgray
     ),
     let(
         [a,b,c,d],square(point(1,1),point(3,2)),
-        (a..b..c..d) filled hsl(240,0.5,0.75)
+        (a..b..c..d) filled color2
     ),
     let(
         [a,b,c,d],square(1),
-        (a..b..c..d) filled hsl(120,0.5,0.75)
+        (a..b..c..d) filled color3
     )
 ])`);
+
+    show_diagram(`eukleides("A bar chart in a selection of colour schemes",
+let(schemes,qualitative_color_schemes(3),
+map(
+let(
+  w, 2
+, origin, point(0,12sn)
+, [c1,c2,c3],schemes[sn]
+, gap, 0.5
+, biggap, 2
+, cw, 3*w+2*gap+biggap
+, data,[
+    [3,4,1,2010]
+  , [5,6,6,2011]
+  , [2,8,4,2012]
+  , [7,1,9,2013]
+  ]
+, style_a, filled dotted c1
+, style_b, filled dashed c2
+, style_c, filled c3
+, [
+    map(
+      let(
+        [name,style,j],d
+      , o, origin+vector(-biggap-gap,5-1.5j)
+      , [
+          polygon(square(o,1)) style
+        , (o+vector(0,0.5)) label(name,deg(180)) size(w)
+        ]
+      ) 
+    , d
+    , zip(["A","B","C"],[style_a,style_b,style_c],[0,1,2])
+    )
+  , map(
+      let(
+        x,cw*j
+      , o1,origin+vector(x,0)
+      , o2, o1+vector(w+gap,0)
+      , o3, o2+vector(w+gap,0)
+      , [a,b,c,year], data[j]
+      , [ 
+          polygon(rectangle(o1,o1+vector(w,0),a)) style_a
+        , (o1+vector(w/2,a)) label(a+"",deg(90)) size(2)
+
+        , polygon(rectangle(o2,o2+vector(w,0),b)) style_b
+        , (o2+vector(w/2,b)) label(b+"",deg(90)) size(2)
+
+        , polygon(rectangle(o3,o3+vector(w,0),c)) style_c
+        , (o3+vector(w/2,c)) label(c+"",deg(90)) size(2)
+
+        , (o1+vector((2w+gap)/2,-0.2)) label(year+"", deg(-90)) size(w)
+        ]
+      )
+    , j
+    , 0..len(data)-1
+    )
+  , (origin+vector(0,-0.2)..origin+vector(cw*len(data),-0.2)) arrow size(3)
+  ]
+)
+, sn
+, 0..len(schemes)-1
+)))
+`);
+
+    show_diagram(`
+// Based on https://twitter.com/Cshearer41/status/1115917680027021312
+eukleides("Catriona Shearer puzzle",[
+let(
+  [a,b,c],equilateral(30)
+, [c,b,d],equilateral(c,b)
+, [d,b,f],equilateral(d,b)
+, a1, b+2/3*(c-b)
+, a2, a+1/2*(b-a)
+, b1, b+3/4*(d-b)
+, b2, b+2/3*(c-b)
+, b3, b+1/2*(b1-b)
+, c1, b+4/5*(f-b)
+, c2, b+3/4*(d-b)
+, c3, b+2/3*(c1-b)
+, c4, b+1/2*(c2-b)
+, [
+    a..b..c
+  , b..c..d
+  , d..b..f
+  , (a..a1..a2) color1 open
+  , (c..b1..b2..b3) color2 open
+  , (d..c1..c2..c3..c4) color3 open
+  , ((c..d)+vector(0,2)) arrows size(10) label("30")
+  , ((c3..a2)+vector(0,-2)) arrows size(10) label("?")
+  ] * size(20) font("sans")
+)
+])
+`);
 
 show_diagram(`
 eukleides("Mouse input and animation demo",
@@ -340,12 +433,12 @@ points,map(point(2,deg(x)),x,0..360#step),
 `);
 
     show_diagram(`eukleides("Different point types",[
+    (point(1,0)..point(2,0)..point(2,1)..point(1,1)) filled color1,
     point(1,0),
     point(2,0) disc,
     point(1,1) box,
     point(2,1) plus,
-    point(2,0) cross,
-    (point(1,0)..point(2,0)..point(2,1)..point(1,1)) filled red opacity(0.2)
+    point(1.5,0.5) cross
 ])`);
 
     show_diagram(`eukleides("Line marks",[
@@ -415,16 +508,16 @@ points,map(point(2,deg(x)),x,0..360#step),
     let(p,projection(point(0,2),line(point(-5,2), point(3,4)), line(point(0,0),point(1,1))),
         [p, line(point(0,2),point(1,3)) dashed]
     ),
-    (line(point(-5,2), point(3,4)) + vector(0,-1)) dashed blue,
+    (line(point(-5,2), point(3,4)) + vector(0,-1)) dashed color1,
     (line(point(-5,2), point(3,4)) + vector(0,-2)) dotted,
     point(0,0),
     (line(point(0,0), point(3,2))) half,
-    (line(point(0,0), point(3,2))+vector(0,-0.5)) half back dotted red size(3),
+    (line(point(0,0), point(3,2))+vector(0,-0.5)) half back dotted color2 size(3),
     circle(point(1,3),4),
     circle(point(1,3),3) dotted,
-    circle(point(1,3),2) dashed size(2) yellow,
+    circle(point(1,3),2) dashed size(2) color3,
     conic(point(2,2),point(3,3),1.5),
-    arc(conic(point(2,4), point(2,5), 0.2),rad(0),rad(pi)) green size(3),
+    arc(conic(point(2,4), point(2,5), 0.2),rad(0),rad(pi)) color4 size(3),
     arc(circle(point(0,0),2),rad(0),rad(pi/2)) hsla(240,0.8,0.8,0.5) size(5) arrow,
     arc(circle(point(0,0),1),rad(0),rad(pi/2)) rgba(255,0,0,0.7) size(1) arrows,
     let(l,line(point(0,0),point(5,1)),
@@ -433,7 +526,7 @@ points,map(point(2,deg(x)),x,0..360#step),
         el,conic(point(7,1),point(7,1.5),0.7),
         [
             l,
-            p blue,
+            p color2,
             intersection(l,p) size(3),
             c,
             intersection(l,c) size(3),
@@ -452,7 +545,7 @@ points,map(point(2,deg(x)),x,0..360#step),
             list(intersection(p1,p2)),
             c1,
             c2,
-            list(intersection(c1,c2)) blue,
+            list(intersection(c1,c2)) color1,
             list(intersection(p2,c1))
         ]
     )

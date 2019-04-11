@@ -1,4 +1,4 @@
-Numbas.addExtension('eukleides',['math','jme'], function(extension) {
+Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension) {
 
     var euk = eukleides;
     var math = Numbas.math;
@@ -23,6 +23,12 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
     jme.registerType(TAngle,'eukleides_angle',{
         string: function(v) {
             return new TString(math.niceNumber(math.precround(math.degrees(v.value),2))+'°');
+        }
+    });
+    jme.display.registerType(TAngle,{
+        displayString: function(a) {
+            console.log(a);
+            return math.niceNumber(math.precround(math.degrees(a.value),2))+'°'.toString();
         }
     });
 
@@ -84,8 +90,8 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                     drawer.local[d[0]] = d[1];
                 }
             });
-            fn(drawer,drawing,ctx);
             drawing.objects.forEach(function(obj) {
+                fn(drawer,obj,ctx);
                 switch(obj.type) {
                     case 'eukleides_drawing':
                         visit(drawer,obj.value,ctx);
@@ -93,6 +99,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
                     case 'list':
                         visit(drawer, {objects:obj.value, style:{}},ctx);
                         break;
+                    default:
                 }
             });
             drawer.pop_local_settings();
@@ -100,76 +107,73 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         return visit;
     }
 
-    var get_point_labels = drawing_visitor(function(drawer,drawing) {
-        drawing.objects.forEach(function(obj) {
-            switch(obj.type) {
-                case 'eukleides_point':
-                    if(drawer.local.label) {
-                        drawer.add_point_label(obj.value);
-                    }
-                    break;
-            }
-        });
+    var get_point_labels = drawing_visitor(function(drawer,obj) {
+        switch(obj.type) {
+            case 'eukleides_point':
+                if(drawer.local.label) {
+                    drawer.add_point_label(obj.value);
+                }
+                break;
+        }
     });
 
-    var draw_drawing = drawing_visitor(function(drawer,drawing,ctx) {
-        drawing.objects.forEach(function(obj) {
-            switch(obj.type) {
-                case 'eukleides_point':
-                    if(drawer.local.label) {
-                        drawer.label_point(obj.value);
-                    } else {
-                        var point = drawer.draw_point(obj.value);
-                        if(ctx && drawer.local.draggable) {
-                            ctx.make_draggable(point, drawer.local.interactive_vars);
-                        }
+    var draw_drawing = drawing_visitor(function(drawer,obj,ctx) {
+        switch(obj.type) {
+            case 'eukleides_point':
+                if(drawer.local.label) {
+                    drawer.label_point(obj.value);
+                } else {
+                    var point = drawer.draw_point(obj.value);
+                    if(ctx && drawer.local.draggable) {
+                        ctx.make_draggable(point, drawer.local.interactive_vars);
                     }
-                    break;
-                case 'eukleides_point_set':
-                    if(drawer.local.label) {
-                        drawer.label_segment(obj.value.points[0],obj.value.points[1]);
-                    } else if(drawer.local.fill) {
-                        drawer.fill_polygon(obj.value);
-                    } else {
-                        drawer.draw_polygon(obj.value);
-                    }
-                    break;
-                case 'eukleides_line':
-                    drawer.draw_line(obj.value);
-                    break;
-                case 'eukleides_circle':
-                    if(drawer.local.fill) {
-                        drawer.fill_circle(obj.value);
-                    } else {
-                        if(obj.from!==undefined) {
-                            drawer.draw_arc(obj.value,obj.from,obj.to)
-                        } else {
-                            drawer.draw_circle(obj.value);
-                        }
-                    }
-                    break;
-                case 'eukleides_conic':
+                }
+                break;
+            case 'eukleides_point_set':
+                if(drawer.local.label) {
+                    drawer.label_segment(obj.value.points[0],obj.value.points[1]);
+                } else if(drawer.local.fill) {
+                    drawer.fill_polygon(obj.value);
+                } else {
+                    drawer.draw_polygon(obj.value);
+                }
+                break;
+            case 'eukleides_line':
+                drawer.draw_line(obj.value);
+                break;
+            case 'eukleides_circle':
+                if(drawer.local.fill) {
+                    drawer.fill_circle(obj.value);
+                } else {
                     if(obj.from!==undefined) {
-                        drawer.draw_conic_arc(obj.value,obj.from,obj.to)
+                        drawer.draw_arc(obj.value,obj.from,obj.to)
                     } else {
-                        drawer.draw_conic(obj.value);
+                        drawer.draw_circle(obj.value);
                     }
-                    break;
-                case 'eukleides_angle_label':
-                    drawer.label_angle(obj.a,obj.b,obj.c);
-                    break;
-                case 'eukleides_drawing':
-                case 'list':
-                    break;
-                default:
-                    throw(new Numbas.Error('Eukleides trying to draw unknown object type: '+obj.type));
-            }
-        });
+                }
+                break;
+            case 'eukleides_conic':
+                if(obj.from!==undefined) {
+                    drawer.draw_conic_arc(obj.value,obj.from,obj.to)
+                } else {
+                    drawer.draw_conic(obj.value);
+                }
+                break;
+            case 'eukleides_angle_label':
+                drawer.label_angle(obj.a,obj.b,obj.c);
+                break;
+            case 'eukleides_drawing':
+            case 'list':
+                break;
+            default:
+                throw(new Numbas.Error('Eukleides trying to draw unknown object type: '+obj.type));
+        }
     });
 
 	var funcObj = Numbas.jme.funcObj;
 	var TString = Numbas.jme.types.TString;
 	var TNum = Numbas.jme.types.TNum;
+    var TInt = Numbas.jme.types.TInt;
 	var TList = Numbas.jme.types.TList;
     var TDict = Numbas.jme.types.TDict;
 	var TBool = Numbas.jme.types.TBool;
@@ -250,7 +254,7 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
 
     extension.scope.addFunction(new funcObj('orthocenter',[TPoint,TPoint,TPoint],TPoint,function(A,B,C) {
         return euk.Point.create_orthocenter(A,B,C);
-    },{description:'The orthocenter of the given polygon'}));
+    },{description:'The orthocenter of the given triangle'}));
 
     extension.scope.addFunction(new funcObj('+',[TPoint,TVector],TPoint,function(p,u) {
         return p.translate(vec(u));
@@ -459,6 +463,10 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
     extension.scope.addFunction(new funcObj('perpendicular_bisector',[TPointSet],TLine,function(set) {
         return set.perpendicular_bisector();
     },{description:'The perpendicular bisector of the given segment'}));
+
+    extension.scope.addFunction(new funcObj('center',[TPointSet],TPoint,function(set) {
+        return set.isobarycenter();
+    },{description:'The isobarycenter of the given polygon'}));
 
     extension.scope.addFunction(new funcObj('isobarycenter',[TPointSet],TPoint,function(set) {
         return set.isobarycenter();
@@ -917,8 +925,14 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         'nospoilers': {aria_mode: 'nospoilers'}
     }
 
-    euk.colors.forEach(function(color) {
+    var colors = ['black','darkgray','gray','lightgray','white'];
+    colors.forEach(function(color) {
         style_commands[color] = {color: color}
+    });
+
+    var default_color_scheme = eukleides.colorbrewer['Paired'][4];
+    default_color_scheme.forEach(function(color,i) {
+        style_commands['color'+(i+1)] = {color: color, color_description: 'color '+(i+1)};
     });
 
     Object.entries(style_commands).forEach(function(e) {
@@ -970,6 +984,46 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
     extension.scope.addFunction(new funcObj('color',[TString],TDrawing,function(color) {
         return new TDrawing([],{color:color});
     }, {unwrapValues: true},{description:''}));
+
+    function get_color_schemes(n,kind) {
+        var schemes = euk.color_schemes(Math.max(n,3),kind);
+        if(schemes.length<1) {
+            throw(new Error("No appropriate colour scheme could be found."));
+        }
+        schemes = schemes.map(function(scheme) {
+            return new TList(scheme.slice(0,n).map(function(color,i) {
+                return new TDrawing([],{color:color, color_description: 'color '+(i+1)});
+            }));
+        })
+        return schemes;
+    }
+    function get_color_scheme(n,kind) {
+        return get_color_schemes(n,kind)[0];
+    }
+
+    extension.scope.addFunction(new funcObj('sequential_color_schemes',[TInt],TList, function(n) {
+        return new TList(get_color_schemes(n,'seq'));
+    }, {unwrapValues: true}, {description: 'Get a list of colour schemes for a sequential data set'}));
+
+    extension.scope.addFunction(new funcObj('divergent_color_schemes',[TInt],TList, function(n) {
+        return new TList(get_color_schemes(n,'div'));
+    }, {unwrapValues: true}, {description: 'Get a list of colour schemesfor a divergent data set'}));
+
+    extension.scope.addFunction(new funcObj('qualitative_color_schemes',[TInt],TList, function(n) {
+        return new TList(get_color_schemes(n,'qual'));
+    }, {unwrapValues: true}, {description: 'Get a list of colour schemes for a qualitative data set'}));
+
+    extension.scope.addFunction(new funcObj('sequential_color_scheme',[TInt],TDrawing, function(n) {
+        return get_color_scheme(n,'seq');
+    }, {unwrapValues: true}, {description: 'Get a list of colours for a sequential data set'}));
+
+    extension.scope.addFunction(new funcObj('divergent_color_scheme',[TInt],TDrawing, function(n) {
+        return get_color_scheme(n,'div');
+    }, {unwrapValues: true}, {description: 'Get a list of colours for a divergent data set'}));
+
+    extension.scope.addFunction(new funcObj('qualitative_color_scheme',[TInt],TDrawing, function(n) {
+        return get_color_scheme(n,'qual');
+    }, {unwrapValues: true}, {description: 'Get a list of colours for a qualitative data set'}));
 
     extension.scope.addFunction(new funcObj('opacity',[TNum],TDrawing,function(opacity) {
         return new TDrawing([],{opacity:opacity});
@@ -1041,11 +1095,15 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
         var min_x = Infinity, min_y = Infinity, max_x = -Infinity, max_y = -Infinity;
         var children = Array.prototype.slice.apply(svg.children);
         children.forEach(function(c) {
-            if(!c.getBBox) {
+            try {
+                if(!c.getBBox) {
+                    return;
+                }
+                var r = c.getBBox();
+                var m = c.getCTM();
+            } catch(e) {
                 return;
             }
-            var r = c.getBBox();
-            var m = c.getCTM();
 
             /* Text elements are scaled (1,-1) to get them the right way up, since
              * the global coords are flipped so positive y is up.
@@ -1312,5 +1370,19 @@ Numbas.addExtension('eukleides',['math','jme'], function(extension) {
             return new THTML(svg);
         }
     },{description:''}));
-    Numbas.jme.lazyOps.push('eukleides');
+    jme.lazyOps.push('eukleides');
+    jme.findvarsOps.eukleides = function(tree,boundvars,scope) {
+        var vars = [];
+        var initial_values;
+        var args = tree.args;
+        if(args.length<=3) {
+            initial_values = args[2];
+        } else {
+            initial_values = args[6];
+        }
+        if(initial_values) {
+            vars = vars.concat(jme.findvars(initial_values,boundvars,scope));
+        }
+        return vars;
+    }
 });
