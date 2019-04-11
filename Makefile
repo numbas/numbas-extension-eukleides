@@ -1,21 +1,22 @@
 NUMBAS_RUNTIME_PATH=../dev
 BABEL=node_modules/.bin/babel
+make_current_dir=@mkdir -p $(@D)
 
-dist: dist_dir dist/eukleides.js dist/demo.js
+dist: dist/eukleides.js dist/demo.js
 
-dist_dir:
-	@mkdir -p dist
-
-dist/eukleides.js: eukleides.babel.js extension.js
+dist/eukleides.js: dist/eukleides.babel.js extension.js
+	$(make_current_dir)
 	cat $^ > $@
 
 dist/demo.js: demo.js
+	$(make_current_dir)
 	$(BABEL) $< > $@
 
-eukleides.babel.js: eukleides.js
-	@echo "(function() {\nvar exports = {};\n" > $@
+dist/eukleides.babel.js: eukleides.js
+	$(make_current_dir)
+	@echo "(function() {var exports = {};" > $@
 	$(BABEL) $< >> $@
-	@echo "window.eukleides = exports;\n})();\n" >> $@
+	@echo "window.eukleides = exports;})();" >> $@
 
 extension.js: numbas
 
