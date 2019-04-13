@@ -69,12 +69,6 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
 	};
     jme.registerType(TDrawing,'eukleides_drawing');
 
-	var TLabel = function(object,style) {
-        this.object = object;
-		this.style = style;
-	};
-    jme.registerType(TLabel,'eukleides_label');
-
 	var TAngleLabel = function(a,b,c) {
         this.a = a;
         this.b = b;
@@ -143,7 +137,11 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
                 break;
             case 'eukleides_circle':
                 if(drawer.local.fill) {
-                    drawer.fill_circle(obj.value);
+                    if(obj.from!==undefined) {
+                        drawer.fill_arc(obj.value,obj.from,obj.to);
+                    } else {
+                        drawer.fill_circle(obj.value);
+                    }
                 } else {
                     if(obj.from!==undefined) {
                         drawer.draw_arc(obj.value,obj.from,obj.to)
@@ -170,6 +168,37 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         }
     });
 
+    var translate_types = {
+        'eukleides_point': function(p,u) {
+            return new TPoint(p.value.translate(u));
+        },
+        'eukleides_line': function(line,u) {
+            return new TLine(line.value.translate(u));
+        },
+        'eukleides_point_set': function(set,u) {
+            return new TPointSet(set.value.translate(u));
+        },
+        'eukleides_circle': function(circle,u) {
+            var c2 = new TCircle(circle.value.translate(u));
+            c2.from = circle.from;
+            c2.to = circle.to;
+            return c2;
+        },
+        'eukleides_conic': function(conic,u) {
+            return new TConic(conic.value.translate(u));
+        },
+        'eukleides_drawing': function(drawing,u) {
+            return new TDrawing(drawing.value.objects.map(function(x){return translate_object(x,u)}),drawing.value.style);
+        },
+        'eukleides_angle_label': function(l,u) {
+            return new TAngleLabel(l.a.translate(u), l.b.translate(u), l.c.translate(u));
+        }
+    };
+
+    function translate_object(x,v) {
+        return translate_types[x.type](x,v);
+    }
+
 	var funcObj = Numbas.jme.funcObj;
 	var TString = Numbas.jme.types.TString;
 	var TNum = Numbas.jme.types.TNum;
@@ -186,10 +215,49 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
     var sangle = sig.type('eukleides_angle');
     var snum = sig.type('number');
     var snumorangle = sig.optional(sig.or(snum,sangle));
+    var sig_eukleides = sig.or.apply(sig,['eukleides_angle','eukleides_point','eukleides_point_set','eukleides_line','eukleides_circle','eukleides_conic','eukleides_angle_label','eukleides_angle','eukleides_drawing'].map(sig.type));
+
+    function sig_drawing_of(sig) {
+
+        var f = function(args) {
+            if(args.length==0) {
+                return false;
+            }
+            var d = args[0];
+            if(d.type!='eukleides_drawing') {
+                return false;
+            }
+            var items = sig(d.value.objects);
+            if(items===false || items.length != d.value.objects.length) {
+                return false;
+            } else {
+                return [{type:'eukleides_drawing', items: items}];
+            }
+        }
+        f.kind = 'eukleides_drawing';
+        f.signature = sig;
+        return f;
+    }
 
     extension.scope.setVariable('origin',new TPoint(new euk.Point(0,0)));
 
     extension.scope.addFunction(new funcObj('degrees',[TAngle],TNum,function(v){return math.degrees(v)}));
+
+    var sig_translatable = sig.or.apply(sig,Object.keys(translate_types).map(sig.type));
+    extension.scope.addFunction(new funcObj('+',[sig_translatable,TVector],'?',null,{
+        evaluate: function(args,scope) {
+            var x = args[0];
+            var v = vec(args[1].value);
+            return translate_object(x,v);
+        }
+    }));
+    extension.scope.addFunction(new funcObj('-',[sig_translatable,TVector],'?',null,{
+        evaluate: function(args,scope) {
+            var x = args[0];
+            var v = vec(Numbas.vectormath.negate(args[1].value));
+            return translate_object(x,v);
+        }
+    }));
 
     extension.scope.addFunction(new funcObj('+',[TAngle,TAngle],TAngle,math.add),
     {description: 'Add two angles'});
@@ -255,14 +323,6 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
     extension.scope.addFunction(new funcObj('orthocenter',[TPoint,TPoint,TPoint],TPoint,function(A,B,C) {
         return euk.Point.create_orthocenter(A,B,C);
     },{description:'The orthocenter of the given triangle'}));
-
-    extension.scope.addFunction(new funcObj('+',[TPoint,TVector],TPoint,function(p,u) {
-        return p.translate(vec(u));
-    },{description:'Translate a point by a vector'}));
-
-    extension.scope.addFunction(new funcObj('-',[TPoint,TVector],TPoint,function(p,u) {
-        return p.translate(vec(Numbas.vectormath.negate(u)));
-    },{description:'Translate a point by the opposite of a vector'}));
 
     extension.scope.addFunction(new funcObj('reflect',[TPoint,TLine],TPoint,function(p,l) {
         return p.reflect(l);
@@ -360,14 +420,6 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         return euk.Line.create_median(A,B,C);
     },{description:'The line containing the first point and passing through the midpoint of the segment between the second and third'}));
 
-    extension.scope.addFunction(new funcObj('+',[TLine,TVector],TLine,function(line,u) {
-        return line.translate(vec(u));
-    },{description:'Translate a line by a vector'}));
-
-    extension.scope.addFunction(new funcObj('-',[TLine,TVector],TLine,function(line,u) {
-        return line.translate(vec(Numbas.vectormath.negate(u)));
-    },{description:'Translate a line by the opposite of the given vector'}));
-
     extension.scope.addFunction(new funcObj('reflect',[TLine,TPoint],TLine,function(line,p) {
         return line.reflect(p);
     },{description:'Reflect a line in a point'}));
@@ -424,13 +476,32 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         return a.concatenate(b);
     },{description:'Concatenate two polygons'}));
 
-    extension.scope.addFunction(new funcObj('+',[TPointSet,TVector],TPointSet,function(set,u) {
-        return set.translate(vec(u));
-    },{description:'Translate a polygon by the given vector'}));
+    extension.scope.addFunction(new funcObj('..',[TPoint,sig_drawing_of(sig.type('eukleides_point'))],TDrawing,null,{
+        evaluate: function(args,scope) {
+            var p1 = args[0].value;
+            var d = args[1].value;
+            var p2 = d.objects[0].value;
+            return new TDrawing([new TPointSet(new euk.Set([p1,p2]))],d.style);
+        }
+    }));
 
-    extension.scope.addFunction(new funcObj('-',[TPointSet,TVector],TPointSet,function(set,u) {
-        return set.translate(vec(Numbas.vectormath.negate(u)));
-    },{description:'Translate a polygon by the opposite of the given vector'}));
+    extension.scope.addFunction(new funcObj('..',[TPointSet,sig_drawing_of(sig.type('eukleides_point'))],TDrawing,null,{
+        evaluate: function(args,scope) {
+            var s = args[0].value;
+            var d = args[1].value;
+            var p = d.objects[0].value;
+            return new TDrawing([new TPointSet(s.add_tail_point(p))],d.style);
+        }
+    }));
+
+    extension.scope.addFunction(new funcObj('..',[TPoint,sig_drawing_of(sig.type('eukleides_point_set'))],TDrawing,null,{
+        evaluate: function(args,scope) {
+            var p = args[0].value;
+            var d = args[1].value;
+            var s = d.objects[0].value;
+            return new TDrawing([new TPointSet(s.add_head_point(p))],d.style);
+        }
+    }));
 
     extension.scope.addFunction(new funcObj('reflect',[TPointSet,TLine],TPointSet,function(set,line) {
         return set.reflect(line);
@@ -534,14 +605,6 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
     extension.scope.addFunction(new funcObj('foci',[TConic],TList,function(conic) {
         return conic.foci();
     },{unwrapValues:true, description: 'The foci of the given conic'}));
-
-    extension.scope.addFunction(new funcObj('+',[TConic,TVector],TConic,function(conic,u) {
-        return conic.translate(vec(u));
-    },{description:'Translate a conic by the given vector'}));
-
-    extension.scope.addFunction(new funcObj('-',[TConic,TVector],TConic,function(conic,u) {
-        return conic.translate(vec(Numbas.vectormath.negate(u)));
-    },{description:'Translate a conic by the opposite of the given vector'}));
 
     extension.scope.addFunction(new funcObj('reflect',[TConic,TLine],TConic,function(conic,line) {
         return conic.reflect(line);
@@ -905,8 +968,8 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         'open': {close: false},
         'filled': {fill: true},
         'simple': {label_segment: 'simple', angle: 'simple', label:true},
-        'double': {label_segment: 'double', angle: 'double'},
-        'triple': {label_segment: 'triple', angle: 'triple'},
+        'double': {label_segment: 'double', angle: 'double', label:true},
+        'triple': {label_segment: 'triple', angle: 'triple', label:true},
         'full': {style: 'full'},
         'dotted': {style: 'dotted', dec: 'dotted'},
         'dashed': {style: 'dashed', dec: 'dashed'},
@@ -930,7 +993,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         style_commands[color] = {color: color}
     });
 
-    var default_color_scheme = eukleides.colorbrewer['Paired'][4];
+    var default_color_scheme = eukleides.colorbrewer['Set2'][4];
     default_color_scheme.forEach(function(color,i) {
         style_commands['color'+(i+1)] = {color: color, color_description: 'color '+(i+1)};
     });
@@ -1013,15 +1076,15 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         return new TList(get_color_schemes(n,'qual'));
     }, {unwrapValues: true}, {description: 'Get a list of colour schemes for a qualitative data set'}));
 
-    extension.scope.addFunction(new funcObj('sequential_color_scheme',[TInt],TDrawing, function(n) {
+    extension.scope.addFunction(new funcObj('sequential_color_scheme',[TInt],TList, function(n) {
         return get_color_scheme(n,'seq');
     }, {unwrapValues: true}, {description: 'Get a list of colours for a sequential data set'}));
 
-    extension.scope.addFunction(new funcObj('divergent_color_scheme',[TInt],TDrawing, function(n) {
+    extension.scope.addFunction(new funcObj('divergent_color_scheme',[TInt],TList, function(n) {
         return get_color_scheme(n,'div');
     }, {unwrapValues: true}, {description: 'Get a list of colours for a divergent data set'}));
 
-    extension.scope.addFunction(new funcObj('qualitative_color_scheme',[TInt],TDrawing, function(n) {
+    extension.scope.addFunction(new funcObj('qualitative_color_scheme',[TInt],TList, function(n) {
         return get_color_scheme(n,'qual');
     }, {unwrapValues: true}, {description: 'Get a list of colours for a qualitative data set'}));
 
@@ -1068,6 +1131,12 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
             return new TDrawing(nobjects, d.style);
         }
     },{description:''}))
+
+    extension.scope.addFunction(new funcObj('group',[sig.multiple(sig.or(sig_eukleides,sig.type('list')))],TDrawing,null,{
+        evaluate: function(args,scope) {
+            return new TDrawing(args,{});
+        }
+    },{description:''}));
 
     extension.scope.addFunction(new funcObj('*',['?',TDrawing],TDrawing,null,{
         evaluate: function(args,scope) {

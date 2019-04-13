@@ -660,6 +660,11 @@ class Circle extends Obj {
         return new Circle(center,r);
     }
 
+    translate(u) {
+        const center = (new Point(this.x,this.y)).translate(u);
+        return new Circle(center, this.r);
+    }
+
     center() {
         return new Point(this.x,this.y);
     }
@@ -1270,7 +1275,7 @@ function lines_intersection(l1,l2) {
 }
 
 function line_segment_intersection(set,a,b,c,d) {
-    var [p,t] = set;
+    const [p,t] = set;
     if(t===undefined) {
         return [];
     }
@@ -1294,7 +1299,7 @@ function line_set_intersection(l,s) {
     }
     const a = sin(l.a);
     const b = -cos(l.a);
-    const c = -a*l.x+b*l.y;
+    const c = -a*l.x-b*l.y;
     function dist(p) {
         return a*p.x+b*p.y+c;
     }
@@ -1516,7 +1521,7 @@ class Drawer {
             font_size: 0.2,
             bold: false,
             italic: false,
-            font_family: 'serif',
+            font_family: 'sans-serif',
             close: true,
             label_dist: 0.2
         }
@@ -1772,10 +1777,10 @@ class SVGDrawer extends Drawer {
                 break;
             case DOTTED:
                 const lineWidth = e.getAttribute('stroke-width') || this.local.size*0.02;
-                s = `${dp(lineWidth)} 0.2`;
+                s = `0 0.2`;
                 break;
             case DASHED:
-                s = '0.3 0.2';
+                s = `${this.SIZE(0.15)} ${this.SIZE(0.1)}`;
                 break;
         }
         e.setAttribute('stroke-dasharray',s);
@@ -2465,6 +2470,22 @@ class SVGDrawer extends Drawer {
             this.set_aria_label(arc,desc);
             return arc;
         }
+    }
+
+    fill_arc(c,a,b) {
+        const arc = this.arc(c.x,c.y,c.r,b,a);
+        this.set_fill(arc);
+        this.set_style(arc);
+        let desc = 'filled arc';
+        if(this.has_label_for_point(c)) {
+            desc += ` centred at ${this.label_for_point(c)}`;
+        }
+        if(this.aria_mode==VERBOSE) {
+            desc += ` with radius ${dpformat(c.r)} between ${dpformat(RTOD(a))}° and ${dpformat(RTOD(b))}°`;
+        }
+        desc = this.describe_style(desc);
+        this.set_aria_label(arc,desc);
+        return arc;
     }
 
     fill_circle(c) {

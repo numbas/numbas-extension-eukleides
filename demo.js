@@ -50,9 +50,9 @@ circle(point(2,deg(30)),3)
 ,point(3,deg(300)) text("8")
 ,point(2,deg(90)) text("9")
 ,point(3,deg(150)) text("10")
-,point(6,deg(45)) text("B") bold
-,point(6,deg(135)) text("A") bold
-,point(5.3,deg(-90)) text("C") bold
+,point(5.5,deg(45)) text("B") bold
+,point(5.5,deg(135)) text("A") bold
+,point(5.5,deg(-90)) text("C") bold
 ]) size(2)
 ])`);
 
@@ -366,6 +366,303 @@ let(
 `);
 
 show_diagram(`
+// from https://twitter.com/Cshearer41/status/1116736986507882498
+eukleides("The diagonal of the square has been divided into three sections of length 4. What's the shaded area?",
+let(
+ w,6sqrt(2)
+,[a,b,c,d],square(w)
+,p1,d+(b-d)/3
+,p2,d+(b-d)*2/3
+,e2,intersection(line(a,p2),b..c)[0]
+,e1,intersection(line(e2,p1),a..d)[0]
+,[
+  (d..p1) label("4") size(2)
+ ,(p2..p1) label("4") size(2)
+ ,(p2..b) label("4") size(2)
+ ,[(d..e1..p1)
+  ,(p1..e2..p2)
+  ,(a..p2..b)
+  ] * filled color3
+ ,(d..b) size(4) color2
+ ,(e1..e2..a) size(4) color4 open
+ ,(a..b..c..d) size(4)
+ ]
+)
+,["y":7]
+)
+`);
+
+show_diagram(`
+// https://twitter.com/Cshearer41/status/1114798315504308224
+eukleides("The equilateral triangle in the corner of this square is tangent to the circle where they touch. What’s the diameter?",let(
+ w,15
+,[a,b,c],equilateral(w)
+,d,point(r,deg(60+90))+(c-origin)
+,s,y(d)+r
+,[s1,s2,s3,s4],square(b,s,deg(90))
+,[
+  (s1..s2..s3..s4) size(15) color3
+ ,circle(d,r) size(15) color2
+ ,(a..b..c) color1 size(15)
+ ,((d-vector(r,0))..(d+vector(r,0))) arrows size(9) label("?") color4
+ ,((b..a)-vector(0,1.5)) arrows size(9) label(w) color4
+ ]
+),["r":15])
+`);
+
+show_diagram(`
+// based on https://twitter.com/panlepan/status/1101789897902436353
+eukleides("Three 6×3 rectangles overlap. Is this triangle a 3-4-5?",let(
+ [a1,a2,a3,a4],rectangle(origin,point(6,0),3)
+,[b1,b2,b3,b4],(a1..a2..a3..a4)+vector(3,3)
+,[c1,c2,c3,c4],rectangle(a2,3,6,rad(arctan(3/6)*2))
+,p,intersection(b1..b2,c2..c3)[0]
+,ma,midpoint(a1..a2)
+,mb,midpoint(b3..b4)
+,[
+  (a1..a2..a3..a4) filled color1 transparent
+ ,(b1..b2..b3..b4) filled color1 transparent
+ ,(c1..c2..c3..c4) filled color1 transparent
+ ,(ma..b1) dashed color2 size(2)
+ ,(mb..a3) dashed color2 size(2)
+ ,(a1..a2..a3..a4) color2 size(4)
+ ,(b1..b2..b3..b4) color2 size(4)
+ ,(c1..c2..c3..c4) color2 size(4)
+ ,(p..b1..b4) color4 size(6)
+ ]
+))
+`);
+
+show_diagram(`
+// based on https://twitter.com/panlepan/status/1101103820598362112
+eukleides("What fraction of the semi-circle does the pink square represent ? Is it more or less than a half?",let(
+ theta,arccos(0.5)
+,r,sqrt(5)/2
+,[
+  arc(circle(origin,r),deg(0),deg(180)) filled color1
+ ,(polygon(square(1))-vector(0.5,0)) filled color2
+ ,[
+   arc(circle(origin,r),deg(0),deg(180))
+  ,point(-r,0)..point(r,0)
+ ]
+ ]
+))
+`);
+
+show_diagram(`
+// based on https://twitter.com/panlepan/status/1097644438455750656
+eukleides("What is the missing area?",let(
+ show_hint,false
+,l1,4
+,l2,2.5
+,an,deg(raw_an)
+,v1,vector(l1,0)
+,v2,point(l2,an)-origin
+,a,origin
+,b,a+v1
+,c,a+2v1
+,d,c+v2
+,f,c+2v2
+,g,f-v1
+,h,a+2v2
+,j,a+v2
+,p,point(x,y)
+
+,[
+  (a..b..p..j) filled opacity(0.2) color1
+ ,(b..c..d..p) filled opacity(0.2) color2
+ ,(d..f..g..p) filled opacity(0.2) color3
+ ,(g..h..j..p) filled opacity(0.2) color4
+ ,[
+   (a..b) double
+  ,(b..c) double
+  ,(f..g) double
+  ,(g..h) double
+  ,(a..j) simple
+  ,(j..h) simple
+  ,(c..d) simple
+  ,(d..f) simple
+ ]
+ ,([b..p, d..p, g..p, j..p]) size(2)
+ ,center(a..b..p..j) text("27") color1
+ ,center(b..c..d..j) text("?") color2
+ ,center(d..f..g..p) text("53") color3
+ ,center(g..h..j..p) text("35") color4
+
+ ,if(show_hint,
+   [
+     (p..h)
+    ,(p..a)
+    ,(p..f)
+    ,(p..c)
+    ,center(a..p..j) text("A")
+    ,center(h..p..j) text("A")
+    ,center(a..p..b) text("B")
+    ,center(b..p..c) text("B") 
+    ,center(c..p..d) text("C")
+    ,center(d..p..f) text("C")
+    ,center(f..p..g) text("D")
+    ,center(g..p..h) text("D") 
+   ]
+  ,[]
+  )
+ ,p draggable()
+ ,f draggable()
+ ]
+),["x":2.5,"y":2,"raw_an":60])
+`);
+
+show_diagram(`
+eukleides("Constructing an angle bisector",let(
+ ana,deg(30)
+,anb,deg(-30)
+,r,1
+,r2,r
+,a,point(r,ana)
+,b,point(r,anb)
+,p,intersection(circle(a,r2),circle(b,r2))[0]
+,incidental, dashed gray transparent
+,new,size(2) color2
+,w,3.5
+,h,1
+,steps,[
+  [
+   origin..point(2r,ana)
+  ,origin..point(2r,anb)
+ ]
+ ,[
+   origin..point(2r,ana)
+  ,origin..point(2r,anb)
+  ,circle(origin,r) incidental
+  ,arc(circle(origin,r),ana-deg(5),ana+deg(5)) new
+  ,arc(circle(origin,r),anb-deg(5),anb+deg(5)) new
+  ]
+ ,[
+   origin..point(2r,ana)
+  ,origin..point(2r,anb)
+  ,circle(a,r2) incidental
+  ,arc(circle(origin,r),ana-deg(5),ana+deg(5))
+  ,arc(circle(origin,r),anb-deg(5),anb+deg(5))
+  ,arc(circle(a,r2),-ana-deg(5),-ana+deg(5)) new
+  ]
+ ,[
+   origin..point(2r,ana)
+  ,origin..point(2r,anb)
+  ,circle(b,r2) incidental
+  ,arc(circle(origin,r),ana-deg(5),ana+deg(5))
+  ,arc(circle(origin,r),anb-deg(5),anb+deg(5))
+  ,arc(circle(a,r2),-ana-deg(5),-ana+deg(5))
+  ,arc(circle(b,r2),-anb-deg(5),-anb+deg(5)) new
+  ]
+ ,[
+   origin..point(2r,ana)
+  ,origin..point(2r,anb)
+  ,arc(circle(origin,r),ana-deg(5),ana+deg(5))
+  ,arc(circle(origin,r),anb-deg(5),anb+deg(5))
+  ,arc(circle(a,r),-ana-deg(5),-ana+deg(5))
+  ,arc(circle(b,r),-anb-deg(5),-anb+deg(5))
+  ,origin..(origin+1.2(p-origin)) new
+  ]
+ ,[
+   origin..point(2r,ana)
+  ,origin..point(2r,anb)
+  ,origin..(origin+1.2(p-origin))
+  ,angle(p,origin,a) simple dashed
+  ,angle(b,origin,p) simple dashed
+  ]
+ ]
+,map(
+  map(x+vector(w*mod(j,3),-h*(j-mod(j,3))),x,steps[j])
+ ,j
+ ,0..len(steps)-1
+ )
+))
+`);
+
+show_diagram(`
+eukleides("Constructing an angle bisector animation",-0.5,-1.5,2.5,1.5,let(
+ ana,deg(30)
+,anb,deg(-30)
+,r,1
+,r2,r
+,a,point(r,ana)
+,b,point(r,anb)
+,p,intersection(circle(a,r2),circle(b,r2))[0]
+,speed,1.5
+,st,mod(time/speed,6)
+,t,floor(st)
+,dt,st-t
+,b1,0.6
+,b2,0.8
+,op,switch(
+  dt<b1,dt/b1
+ ,dt<b2,1
+ ,(1-dt)/(1-b2)
+ )
+,incidental, dashed gray opacity(op)
+,new,size(2) color2 opacity(op)
+,added,opacity(if(dt>b2,1,0))
+,fadein,opacity(if(dt<b1,dt/b1,1))
+,w,3.5
+,h,1
+,steps,[
+  [
+   origin..point(2r,ana)
+  ,origin..point(2r,anb)
+ ]
+ ,[
+   origin..point(2r,ana)
+  ,origin..point(2r,anb)
+  ,circle(origin,r) incidental
+  ,arc(circle(origin,r),ana-deg(5),ana+deg(5)) added
+  ,arc(circle(origin,r),anb-deg(5),anb+deg(5)) added
+  ,arc(circle(origin,r),ana-deg(5),ana+deg(5)) new
+  ,arc(circle(origin,r),anb-deg(5),anb+deg(5)) new
+  ]
+ ,[
+   origin..point(2r,ana)
+  ,origin..point(2r,anb)
+  ,circle(a,r2) incidental
+  ,arc(circle(origin,r),ana-deg(5),ana+deg(5))
+  ,arc(circle(origin,r),anb-deg(5),anb+deg(5))
+  ,arc(circle(a,r2),-ana-deg(5),-ana+deg(5)) added
+  ,arc(circle(a,r2),-ana-deg(5),-ana+deg(5)) new
+  ]
+ ,[
+   origin..point(2r,ana)
+  ,origin..point(2r,anb)
+  ,circle(b,r2) incidental
+  ,arc(circle(origin,r),ana-deg(5),ana+deg(5))
+  ,arc(circle(origin,r),anb-deg(5),anb+deg(5))
+  ,arc(circle(a,r2),-ana-deg(5),-ana+deg(5))
+  ,arc(circle(b,r2),-anb-deg(5),-anb+deg(5)) added
+  ,arc(circle(b,r2),-anb-deg(5),-anb+deg(5)) new
+  ]
+ ,[
+   origin..point(2r,ana)
+  ,origin..point(2r,anb)
+  ,arc(circle(origin,r),ana-deg(5),ana+deg(5))
+  ,arc(circle(origin,r),anb-deg(5),anb+deg(5))
+  ,arc(circle(a,r),-ana-deg(5),-ana+deg(5))
+  ,arc(circle(b,r),-anb-deg(5),-anb+deg(5))
+  ,origin..(origin+1.2(p-origin)) added
+  ,origin..(origin+1.2(p-origin)) new
+  ]
+ ,[
+   origin..point(2r,ana)
+  ,origin..point(2r,anb)
+  ,origin..(origin+1.2(p-origin))
+  ,angle(p,origin,a) simple dashed fadein
+  ,angle(b,origin,p) simple dashed fadein
+  ]
+ ]
+,[
+  group(steps[t]) opacity(1)
+ ]
+))
+`);
+
+show_diagram(`
 eukleides("Mouse input and animation demo",
 -2,-2,5,2,[
   let(theta,argument(vector(mousex,mousey)),
@@ -423,8 +720,9 @@ sides,round(min(15,360/an)),
 step,360/sides,
 points,map(point(2,deg(x)),x,0..360#step),
 [
-  map(point(2,deg(360/n)),n,2..15) gray,
-  points
+  circle(origin,2) dashed lightgray
+, map(point(2,deg(360/n)),n,2..15) gray
+, points
 , map(a..b,[a,b],combinations(points,2))
 , point(2,deg(clamp(an,1,180))) draggable("P")
 ]
