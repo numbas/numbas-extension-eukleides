@@ -192,6 +192,9 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         },
         'eukleides_angle_label': function(l,u) {
             return new TAngleLabel(l.a.translate(u), l.b.translate(u), l.c.translate(u));
+        },
+        'list': function(list,u) {
+            return new TList(list.value.map(function(x){return translate_object(x,u)}));
         }
     };
 
@@ -1434,6 +1437,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
             if(min_x===undefined) {
                 var res = find_bounding_box(svg);
                 drawer.setup_frame(res.min_x,res.min_y,res.max_x,res.max_y,1);
+                ctx.draw();
             }
 
             return new THTML(svg);
