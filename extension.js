@@ -26,8 +26,18 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         }
     });
     jme.display.registerType(TAngle,{
+        tex: function(thing,tok,texArgs,settings) {
+            return settings.texNumber(tok.value,settings)+'°';
+        },
+        jme: function(tree,tok,bits,settings) {
+            var deg = math.degrees(tok.value);
+            if(Numbas.util.isInt(deg)) {
+                return 'deg('+settings.jmeNumber(deg,settings)+')';
+            } else {
+                return 'rad('+settings.jmeNumber(tok.value,settings)+')';
+            }
+        },
         displayString: function(a) {
-            console.log(a);
             return math.niceNumber(math.precround(math.degrees(a.value),2))+'°'.toString();
         }
     });
@@ -1007,19 +1017,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         extension.scope.setVariable(name,new TDrawing([],style));
     })
 
-    extension.scope.addFunction(new funcObj('draggable',[],TDrawing,function() {
-        return new TDrawing([],{draggable:true, color: 'blue',size:1.5});
-    }, {unwrapValues: true},{description:''}));
-
-    extension.scope.addFunction(new funcObj('draggable',[TString],TDrawing,function(key) {
-        return new TDrawing([],{draggable:true, key: key, color: 'blue',size:1.5});
-    }, {unwrapValues: true},{description:''}));
-
-    extension.scope.addFunction(new funcObj('draggable',[sig.listof(sig.type('string'))],TDrawing,function(names) {
-        return new TDrawing([],{draggable:true, color: 'blue',size:1.5, interactive_vars: names});
-    }, {unwrapValues: true},{description:''}));
-
-    extension.scope.addFunction(new funcObj('draggable',[TString,sig.listof(sig.type('string'))],TDrawing,function(key,names) {
+    extension.scope.addFunction(new funcObj('draggable',[sig.optional(sig.type('string')),sig.optional(sig.listof(sig.type('string')))],TDrawing,function(key,names) {
         return new TDrawing([],{draggable:true, key: key, color: 'blue',size:1.5, interactive_vars: names});
     }, {unwrapValues: true},{description:''}));
 

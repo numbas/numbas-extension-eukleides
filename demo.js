@@ -24,9 +24,10 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
     }
 
 show_diagram(`eukleides("Circle inscribed in a square",let(
-  s,polygon(square())
-, a,isobarycenter(s)
-, c,circle(a,len(s[1]-s[0])/2)
+  w,1
+, s,polygon(square(w))
+, a,center(s)
+, c,circle(a,w/2)
 , [
     s description("square")
   , c description("circle inscribed in square")
