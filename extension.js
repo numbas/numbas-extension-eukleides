@@ -996,7 +996,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         style_commands[color] = {color: color}
     });
 
-    var default_color_scheme = eukleides.colorbrewer['Set2'][4];
+    var default_color_scheme = eukleides.colorbrewer['Trubetskoy'][6];
     default_color_scheme.forEach(function(color,i) {
         style_commands['color'+(i+1)] = {color: color, color_description: 'color '+(i+1)};
     });
