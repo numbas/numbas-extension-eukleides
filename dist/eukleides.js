@@ -4822,7 +4822,8 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
 
     extension.scope.setVariable('origin',new TPoint(new euk.Point(0,0)));
 
-    extension.scope.addFunction(new funcObj('degrees',[TAngle],TNum,function(v){return math.degrees(v)}));
+    extension.scope.addFunction(new funcObj('degrees',[TAngle],TNum,function(v){return math.degrees(v)}),
+    {description: 'Convert an angle to a number of degrees'});
 
     var sig_translatable = sig.or.apply(sig,Object.keys(translate_types).map(sig.type));
     extension.scope.addFunction(new funcObj('+',[sig_translatable,TVector],'?',null,{
@@ -4830,28 +4831,30 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
             var x = args[0];
             var v = vec(args[1].value);
             return translate_object(x,v);
-        }
+        },
+        description: 'Translate an object or list of objects by the given vector'
     }));
     extension.scope.addFunction(new funcObj('-',[sig_translatable,TVector],'?',null,{
         evaluate: function(args,scope) {
             var x = args[0];
             var v = vec(Numbas.vectormath.negate(args[1].value));
             return translate_object(x,v);
-        }
+        },
+        description: 'Translate an object or list of objects by the opposite of the given vector'
     }));
 
-    extension.scope.addFunction(new funcObj('+',[TAngle,TAngle],TAngle,math.add),
-    {description: 'Add two angles'});
-    extension.scope.addFunction(new funcObj('-u',[TAngle],TAngle,math.negate),
-    {description: 'Add two angles'});
-    extension.scope.addFunction(new funcObj('-',[TAngle,TAngle],TAngle,math.sub),
-    {description: 'Add two angles'});
-    extension.scope.addFunction(new funcObj('*',[TNum,TAngle],TAngle,math.mul),
-    {description: 'Add two angles'});
-    extension.scope.addFunction(new funcObj('*',[TAngle,TNum],TAngle,math.mul),
-    {description: 'Add two angles'});
-    extension.scope.addFunction(new funcObj('/',[TAngle,TNum],TAngle,math.div),
-    {description: 'Add two angles'});
+    extension.scope.addFunction(new funcObj('+',[TAngle,TAngle],TAngle,math.add,
+    {description: 'Add two angles'}));
+    extension.scope.addFunction(new funcObj('-u',[TAngle],TAngle,math.negate,
+    {description: 'Flip the direction of the given angle'}));
+    extension.scope.addFunction(new funcObj('-',[TAngle,TAngle],TAngle,math.sub,
+    {description: 'Subtract two angles'}));
+    extension.scope.addFunction(new funcObj('*',[TNum,TAngle],TAngle,math.mul,
+    {description: 'Multiply an angle by the given scale factor'}));
+    extension.scope.addFunction(new funcObj('*',[TAngle,TNum],TAngle,math.mul,
+    {description: 'Multiply an angle by the given scale factor'}));
+    extension.scope.addFunction(new funcObj('/',[TAngle,TNum],TAngle,math.div,
+    {description: 'Divide an angle by the given scale factor'}));
     extension.scope.addFunction(new funcObj('deg',[TNum],TAngle,function(degrees) {
         var rad = math.radians(degrees);
         return rad;
@@ -5248,8 +5251,14 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
             sig.sequence(snum, snumorangle, snumorangle, sig.optional(sangle))
         ))
     );
+
+    function remove_undefined(args) {
+        return args.filter(function(a) { return a.type!='nothing'; });
+    }
+
     extension.scope.addFunction(new funcObj('triangle',[sig_triangle],TList,null,{
         evaluate: function(args,scope) {
+            args = remove_undefined(args);
             var vertices = [];
             // can give up to two vertices
             for(var i=0;i<2 && i<args.length && args[i].type=='eukleides_point';i++) {
@@ -5300,6 +5309,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
     );
     extension.scope.addFunction(new funcObj('right',[sig_right],TList,null,{
         evaluate: function(args,scope) {
+            args = remove_undefined(args);
             var vertices = [];
             // can give up to two vertices
             for(var i=0;i<2 && i<args.length && args[i].type=='eukleides_point';i++) {
@@ -5340,6 +5350,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
     );
     extension.scope.addFunction(new funcObj('isosceles',[sig_isosceles],TList,null,{
         evaluate: function(args,scope) {
+            args = remove_undefined(args);
             var vertices = [];
             // can give up to two vertices
             for(var i=0;i<2 && i<args.length && args[i].type=='eukleides_point';i++) {
@@ -5386,6 +5397,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
     );
     extension.scope.addFunction(new funcObj('equilateral',[sig_equilateral],TList,null,{
         evaluate: function(args,scope) {
+            args = remove_undefined(args);
             var vertices = [];
             // can give up to two vertices
             for(var i=0;i<2 && i<args.length && args[i].type=='eukleides_point';i++) {
@@ -5416,6 +5428,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
     );
     extension.scope.addFunction(new funcObj('parallelogram',[sig_parallelogram],TList,null,{
         evaluate: function(args,scope) {
+            args = remove_undefined(args);
             var vertices = [];
             // can give up to three vertices
             for(var i=0;i<3 && i<args.length && args[i].type=='eukleides_point';i++) {
@@ -5451,6 +5464,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
     );
     extension.scope.addFunction(new funcObj('rectangle',[sig_rectangle],TList,null,{
         evaluate: function(args,scope) {
+            args = remove_undefined(args);
             var vertices = [];
             // can give up to two vertices
             for(var i=0;i<2 && i<args.length && args[i].type=='eukleides_point';i++) {
@@ -5483,6 +5497,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
     );
     extension.scope.addFunction(new funcObj('square',[sig_square],TList,null,{
         evaluate: function(args,scope) {
+            args = remove_undefined(args);
             var vertices = [];
             // can give up to two vertices
             for(var i=0;i<2 && i<args.length && args[i].type=='eukleides_point';i++) {
@@ -5505,39 +5520,39 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
 
     extension.scope.addFunction(new funcObj('projection',[TPoint,TLine],TPoint,function(A,l) {
         return euk.orthogonal_projection(A,l);
-    },{description:''}));
+    },{description:'The projection of point A onto line l'}));
 
     extension.scope.addFunction(new funcObj('projection',[TPoint,TLine,TLine],TPoint,function(A,l1,l2) {
         return euk.parallel_projection(A,l1,l2);
-    },{description:''}));
+    },{description:'The projection of point A in the direction of line l2 onto line l1'}));
 
     extension.scope.addFunction(new funcObj('intersection',[TLine,TLine],TPoint,function(l1,l2) {
         return euk.lines_intersection(l1,l2);
-    },{description:''}));
+    },{description:'The intersection point of two lines'}));
 
     extension.scope.addFunction(new funcObj('intersection',[TLine,TPointSet],TPointSet,function(l,set) {
         return euk.line_set_intersection(l,set);
-    },{description:''}));
+    },{description:'All points at which the line intersects the perimeter of the given point set'}));
 
     extension.scope.addFunction(new funcObj('intersection',[TLine,TCircle],TPointSet,function(l,c) {
         return euk.line_circle_intersection(l,c);
-    },{description:''}));
+    },{description:'All points at which the line intersects the given circle'}));
 
     extension.scope.addFunction(new funcObj('intersection',[TLine,TConic],TPointSet,function(l,c) {
         return euk.line_conic_intersection(l,c);
-    },{description:''}));
+    },{description:'All points at which the tline intersects the given conic'}));
 
     extension.scope.addFunction(new funcObj('intersection',[TPointSet,TPointSet],TPointSet,function(s1,s2) {
         return euk.sets_intersection(s1,s2);
-    },{description:''}));
+    },{description:'All points at which the perimeters of the two point sets intersect'}));
 
     extension.scope.addFunction(new funcObj('intersection',[TCircle,TCircle],TPointSet,function(c1,c2) {
         return euk.circles_intersection(c1,c2);
-    },{description:''}));
+    },{description:'The points of intersection of the two circles'}));
 
     extension.scope.addFunction(new funcObj('intersection',[TPointSet,TCircle],TPointSet,function(s,c) {
         return euk.circle_set_intersection(s,c);
-    },{description:''}));
+    },{description:'All points of intersection of the perimeter of the point set with the given circle'}));
 
     var style_commands = {
         'dot': {shape:'dot'},
@@ -5587,11 +5602,11 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
 
     extension.scope.addFunction(new funcObj('draggable',[sig.optional(sig.type('string')),sig.optional(sig.listof(sig.type('string')))],TDrawing,function(key,names) {
         return new TDrawing([],{draggable:true, key: key, color: 'blue',size:1.5, interactive_vars: names});
-    }, {unwrapValues: true},{description:''}));
+    }, {unwrapValues: true},{description:'Make a point draggable'}));
 
     extension.scope.addFunction(new funcObj('label',[sig.optional(sig.or(sig.type('string'),sig.type('number'))),sig.optional(sig.type('eukleides_angle')),sig.optional(sig.type('number'))],TDrawing,function(text,angle,dist) {
         return new TDrawing([],{label:true, label_text: text, label_direction: angle, label_dist: dist});
-    }, {unwrapValues: true},{description:''}));
+    }, {unwrapValues: true},{description:'Label a point, segment or angle'}));
 
     extension.scope.addFunction(new funcObj('description',[TString],TDrawing,function(description) {
         return new TDrawing([],{description: description});
@@ -5599,23 +5614,23 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
 
     extension.scope.addFunction(new funcObj('text',[TString],TDrawing,function(text) {
         return new TDrawing([],{label:true, label_text: text, label_dist: 0});
-    }, {unwrapValues: true},{description:''}));
+    }, {unwrapValues: true},{description:'Draw text at a point'}));
 
     extension.scope.addFunction(new funcObj('angle',[TPoint,TPoint,TPoint],TAngleLabel,function(a,b,c) {
         return new TAngleLabel(a,b,c);
-    },{unwrapValues: true},{description:''}));
+    },{unwrapValues: true},{description:'Draw an angle label'}));
 
     extension.scope.addFunction(new funcObj('size',[TNum],TDrawing,function(size) {
         return new TDrawing([],{size:size});
-    }, {unwrapValues: true},{description:''}));
+    }, {unwrapValues: true},{description:'Set the size and stroke width'}));
 
     extension.scope.addFunction(new funcObj('font',[TString],TDrawing,function(font) {
         return new TDrawing([],{font_family:font});
-    }, {unwrapValues: true},{description:''}));
+    }, {unwrapValues: true},{description:'Set the font'}));
 
     extension.scope.addFunction(new funcObj('color',[TString],TDrawing,function(color) {
         return new TDrawing([],{color:color});
-    }, {unwrapValues: true},{description:''}));
+    }, {unwrapValues: true},{description:'Set the fill or stroke colour'}));
 
     function get_color_schemes(n,kind) {
         var schemes = euk.color_schemes(Math.max(n,3),kind);
@@ -5659,29 +5674,29 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
 
     extension.scope.addFunction(new funcObj('opacity',[TNum],TDrawing,function(opacity) {
         return new TDrawing([],{opacity:opacity});
-    }, {unwrapValues: true},{description:''}));
+    }, {unwrapValues: true},{description:'Set the opacity. 0 is invisible and 1 is solid.'}));
 
     extension.scope.addFunction(new funcObj('hsl',[TNum,TNum,TNum],TDrawing,function(h,s,l) {
         return new TDrawing([],{color:'hsl('+h+','+(100*s)+'%,'+(100*l)+'%)'});
-    }, {unwrapValues: true},{description:''}));
+    }, {unwrapValues: true},{description:'Set the colour, in HSL format. H is between 0 and 360; S and L are between 0 and 1.'}));
 
     extension.scope.addFunction(new funcObj('hsla',[TNum,TNum,TNum,TNum],TDrawing,function(h,s,l,a) {
         return new TDrawing([],{color:'hsla('+h+','+(100*s)+'%,'+(100*l)+'%,'+a+')'});
-    }, {unwrapValues: true},{description:''}));
+    }, {unwrapValues: true},{description:'Set the colour, in HSLA format. H is between 0 and 360, S, L and A are between 0 and 1.'}));
 
     extension.scope.addFunction(new funcObj('rgb',[TNum,TNum,TNum],TDrawing,function(r,g,b) {
         return new TDrawing([],{color:'rgb('+r+','+g+','+b+')'});
-    }, {unwrapValues: true},{description:''}));
+    }, {unwrapValues: true},{description:'Set the colour, in RGB format. R, G and B are between 0 and 255.'}));
 
     extension.scope.addFunction(new funcObj('rgba',[TNum,TNum,TNum,TNum],TDrawing,function(r,g,b,a) {
         return new TDrawing([],{color:'rgb('+r+','+g+','+b+','+a+')'});
-    }, {unwrapValues: true},{description:''}));
+    }, {unwrapValues: true},{description:'Set the colour, in RGBA format. R,G and B are between 0 and 255; A is between 0 and 1.'}));
 
     extension.scope.addFunction(new funcObj('*',[TDrawing,TDrawing],TDrawing,function(d1,d2) {
         var objects = d1.objects.concat(d2.objects);
         var style = Numbas.util.extend_object({},d1.style,d2.style);
         return new TDrawing(objects,style);
-    }, {unwrapValues: true},{description:''}));
+    }, {unwrapValues: true},{description:'Combine two drawings'}));
 
     extension.scope.addFunction(new funcObj('*',[TPointSet,TDrawing],TDrawing,null,{
         evaluate: function(args,scope) {
@@ -5690,7 +5705,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
             var nobjects = d.objects.concat([object]);
             return new TDrawing(nobjects, d.style);
         }
-    },{description:''}))
+    },{description:'Add a drawing modifier to a set of points'}))
 
     extension.scope.addFunction(new funcObj('*',[TList,TDrawing],TDrawing,null,{
         evaluate: function(args,scope) {
@@ -5699,13 +5714,13 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
             var nobjects = d.objects.concat(objects);
             return new TDrawing(nobjects, d.style);
         }
-    },{description:''}))
+    },{description:'Add a drawing modifier to a list of objects'}))
 
     extension.scope.addFunction(new funcObj('group',[sig.multiple(sig.or(sig_eukleides,sig.type('list')))],TDrawing,null,{
         evaluate: function(args,scope) {
             return new TDrawing(args,{});
         }
-    },{description:''}));
+    },{description:'Group objects as a drawing'}));
 
     extension.scope.addFunction(new funcObj('*',['?',TDrawing],TDrawing,null,{
         evaluate: function(args,scope) {
@@ -5714,7 +5729,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
             var nobjects = d.objects.concat([object]);
             return new TDrawing(nobjects, d.style);
         }
-    },{description:''}))
+    },{description:'Add a drawing modifier to an object'}))
 
     var svg_acc = 0;
     function create_svg() {
@@ -5963,7 +5978,13 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         }
     }
 
-    extension.scope.addFunction(new funcObj('eukleides',[TString,TNum,TNum,TNum,TNum,TDrawing,TDict],THTML,null,{
+    var sig_draw_eukleides = sig.sequence(
+        sig.type('string'),
+        sig.optional(sig.sequence(sig.type('number'),sig.type('number'),sig.type('number'),sig.type('number'))),
+        sig.or(sig_eukleides,sig.type('list')),
+        sig.optional(sig.type('dict'))
+    );
+    extension.scope.addFunction(new funcObj('eukleides',[sig_draw_eukleides],THTML,null,{
         evaluate: function(args,scope) {
             var objects;
             var title_tree = args[0];
@@ -5973,7 +5994,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
                 if(args[2]) {
                     initial_values = scope.evaluate(args[2]);
                     if(initial_values.type!='dict') {
-                        throw(new Numbas.Error("The 3rd argument to draw_interactive_svg must be a dictionary, not "+initial_values.type));
+                        throw(new Numbas.Error("The final argument to <code>eukleides</code> must be a dictionary, not "+initial_values.type));
                     }
                     initial_values = initial_values.value;
                 }
@@ -5986,7 +6007,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
                 if(args[6]) {
                     initial_values = scope.evaluate(args[6]);
                     if(initial_values.type!='dict') {
-                        throw(new Numbas.Error("The 6th argument to draw_interactive_svg must be a dictionary, not "+initial_values.type));
+                        throw(new Numbas.Error("The final argument to <code>eukleides</code> must be a dictionary, not "+initial_values.type));
                     }
                     initial_values = initial_values.value;
                 }
@@ -6008,7 +6029,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
 
             return new THTML(svg);
         }
-    },{description:''}));
+    },{description:'Draw a Eukleides diagram'}));
     jme.lazyOps.push('eukleides');
     jme.findvarsOps.eukleides = function(tree,boundvars,scope) {
         var vars = [];

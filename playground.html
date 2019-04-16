@@ -28,12 +28,12 @@ body > * {
     box-sizing: border-box;
 }
 #output { 
-    grid-row: a / c;
-    grid-column: 2;
+    grid-row: b / c;
+    grid-column: 1;
     padding: 2px;
 }
 #output > svg {
-    max-height: 99vh;
+    max-height: 50vh;
     border: 1px dashed;
 }
 
@@ -48,9 +48,14 @@ body > * {
     overflow-y: scroll;
 }
 #help {
-    grid-row: b / c;
+    grid-row: a / c;
     padding: 1em;
     overflow-y: scroll;
+}
+
+#help h1 {
+    text-align: center;
+    font-size: 2rem;
 }
 
 #help * ~ dt {
@@ -60,12 +65,64 @@ body > * {
     background: #eee;
     padding: 0.3em 1em;
 }
+#help dt.active {
+    background: hsl(120, 70%, 90.3%);
+    font-weight: bold;
+}
+#help dd > ul {
+    padding: 0;
+}
 #help dd li ~ li {
     margin-top: 0.5em;
 }
-#help dd .description {
+.signature {
+    word-spacing: 0.2em;
+}
+.signature .function-name {
+    font-size: 1.3em;
+}
+.signature .function-bracket {
+    font-size: 1.3em;
+}
+.signature code.name {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+.signature code.type {
+    font-style: italic;
+    background: #eee;
+    padding: 0.2em;
+    word-spacing: normal;
+}
+
+.description {
     margin: 0.2em 0 0 0;
     font-style: italic;
+}
+
+#fn-alphabet {
+    display: flex;
+    position: sticky;
+    top: -1em;
+    left: 0;
+    background: #555;
+    padding: 0.3em;
+    z-index: 100;
+    font-family: sans-serif;
+    justify-content: space-evenly;
+}
+#fn-alphabet a {
+    color: white;
+    text-decoration: none;
+    display: inline-block;
+    margin: 0 0.2em;
+}
+dt {
+    position: relative;
+}
+a.anchor {
+    position: absolute;
+    top: -2em;
 }
 
 body.error #output {
@@ -90,11 +147,19 @@ eukleides("A diagram",[
 triangle()
 ])
         </textarea>
-        <div id="output">
-        </div>
-        <div id="help">
-            <dl id="function-definitions"></dl>
-        </div>
+        <section id="output">
+        </section>
+        <section id="help">
+            <h1>Help</h1>
+            <h2>Types</h2>
+            <dl id="types"></dl>
+            <h2>Functions</h2>
+            <div>
+                <div id="fn-alphabet">
+                </div>
+                <dl id="function-definitions"></dl>
+            </div>
+        </section>
     </body>
 </html>
 
