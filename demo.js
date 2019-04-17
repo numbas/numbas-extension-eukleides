@@ -57,89 +57,6 @@ circle(point(2,deg(30)),3)
 ]) size(2)
 ])`);
 
-show_diagram(`
-// based on https://donsteward.blogspot.com/2011/06/add-one-square.html
-eukleides("Add one square to each shape so it has a line of symmetry",[
- group(
-  map(point(p[0],p[1]),p,product(0..6,0..6))
- ,point(1,4) .. point(5,4) .. point(5,3) .. point(3,3) .. point(3,2) 
-  .. point(5,2) .. point(5,1) .. point(2,1) .. point(2,3) .. point(1,3)
- )
-,group(
-  map(point(p[0],p[1]),p,product(0..6,0..6))
- ,point(1,2) .. point(1,4) .. point(3,4) .. point(3,3) .. point(4,3) .. point(4,1) .. point(3,1) .. point(3,2)
- )+vector(8,0)
-,group(
-  map(point(p[0],p[1]),p,product(0..6,0..6))
- ,point(1,4) .. point(4,4) .. point(4,1) .. point(3,1) .. point(3,3) .. point(1,3)
- )+vector(16,0)
-,group(
-  map(point(p[0],p[1]),p,product(0..6,0..6))
- ,point(2,1) .. point(2,3) .. point(4,3) .. point(4,4) .. point(5,4) .. point(5,5) .. point(6,5) .. point(6,2) .. point(5,2) .. point(5,1)
- )+vector(24,0)
-,group(
-  map(point(p[0],p[1]),p,product(0..6,0..6))
- ,point(1,2) .. point(1,4) .. point(2,4) .. point(2,5) .. point(3,5) .. point(3,3) .. point(2,3) .. point(2,2)
- ,point(6,0) label("(2)"))+vector(0,-8)
-,group(
-  map(point(p[0],p[1]),p,product(0..6,0..6))
- ,point(2,2) .. point(2,4) .. point(3,4) .. point(3,5) .. point(4,5) .. point(4,4) .. point(5,4) .. point(5,3) .. point(4,3) .. point(4,1) .. point(3,1) .. point(3,2),point(6,0) label("(2)")
- )+vector(8,-8)
-,group(
-  map(point(p[0],p[1]),p,product(0..6,0..6))
- ,point(1,2) .. point(1,3) .. point(2,3) .. point(2,5) .. point(3,5) .. point(3,3) .. point(5,3) .. point(5,2),point(6,0) label("(2)")
- )+vector(16,-8)
-,group(
-  map(point(p[0],p[1]),p,product(0..6,0..6))
- ,point(1,1) .. point(1,5) .. point(2,5) .. point(2,4) ..point(4,4) .. point(4,3) .. point(5,3) ..point(5,1)
- )+vector(24,-8)
-,group(
-  map(point(p[0],p[1]),p,product(0..6,0..6))
- ,point(1,3) .. point(1,4) .. point(4,4) .. point(4,2) .. point(3,2) .. point(3,3),point(6,0) label("(4)")
- )+vector(0,-16)
-,group(
-  map(point(p[0],p[1]),p,product(0..6,0..6))
- ,point(1,1) .. point(1,3) .. point(3,3) .. point(3,4) .. point(4,4) .. point(4,1),point(6,0) label("(3)")
- )+vector(8,-16)
-,group(
-  map(point(p[0],p[1]),p,product(0..6,0..6))
- ,point(1,2) .. point(1,4) .. point(2,4) .. point(2,5) .. point(3,5) .. point(3,4) .. point(4,4) .. point(4,2),point(6,0) label("(4)")
- )+vector(16,-16)
-,group(
-  map(point(p[0],p[1]),p,product(0..6,0..6))
- ,point(1,2) .. point(1,4) .. point(3,4) .. point(3,3) .. point(4,3) .. point(4,2),point(6,0) label("(4)")
- )+vector(24,-16)
-,point(0,-1) label("add an extra square so that the shape has at least one line of symmetry the (number) is the number of solutions",deg(0),0.001) size(1.8)
-,point(0,-9) label("to give the overall shape a line of symmetry, try to find all possible positions for the one extra square for these:",deg(0),0.001) size(1.8)
-]*size(2))
-`);
-
-show_diagram(`
-// based on http://pythagoreantriples.blogspot.com/2013/04/finding-length-in-pt-traingle.html
-eukleides("",let(
- [a,x,y,z],rectangle(30,24)
-,b,y-vector(12,0)
-,v,b-x
-,c,intersection(perpendicular(line(x,b),a),line(x,b))
-,[
-  a..x
- ,y..x label(24)
- ,b..y label(7)
- ,z..b label(18)
- ,x..c label(7)
- ,z..a
- ,angle(a,z,y) right
- ,angle(z,y,x) right
- ,x..b
- ,a label("A",deg(-135))
- ,c label("C",argument(c-a))
- ,a..c..b filled color3
- ,a..c..b
- ,angle(b,c,a) right
- ] * size(8)
-))
-`);
-
     show_diagram(`eukleides("Interactive plot of sine curve",
 -2,-1.7,2*pi+1,2,
 [
@@ -747,6 +664,89 @@ eukleides("Constructing an angle bisector animation",-0.5,-1.5,2.5,1.5,let(
 `);
 
 show_diagram(`
+// based on https://donsteward.blogspot.com/2011/06/add-one-square.html
+eukleides("Add one square to each shape so it has a line of symmetry",[
+ group(
+  map(point(p[0],p[1]),p,product(0..6,0..6))
+ ,point(1,4) .. point(5,4) .. point(5,3) .. point(3,3) .. point(3,2) 
+  .. point(5,2) .. point(5,1) .. point(2,1) .. point(2,3) .. point(1,3)
+ )
+,group(
+  map(point(p[0],p[1]),p,product(0..6,0..6))
+ ,point(1,2) .. point(1,4) .. point(3,4) .. point(3,3) .. point(4,3) .. point(4,1) .. point(3,1) .. point(3,2)
+ )+vector(8,0)
+,group(
+  map(point(p[0],p[1]),p,product(0..6,0..6))
+ ,point(1,4) .. point(4,4) .. point(4,1) .. point(3,1) .. point(3,3) .. point(1,3)
+ )+vector(16,0)
+,group(
+  map(point(p[0],p[1]),p,product(0..6,0..6))
+ ,point(2,1) .. point(2,3) .. point(4,3) .. point(4,4) .. point(5,4) .. point(5,5) .. point(6,5) .. point(6,2) .. point(5,2) .. point(5,1)
+ )+vector(24,0)
+,group(
+  map(point(p[0],p[1]),p,product(0..6,0..6))
+ ,point(1,2) .. point(1,4) .. point(2,4) .. point(2,5) .. point(3,5) .. point(3,3) .. point(2,3) .. point(2,2)
+ ,point(6,0) label("(2)"))+vector(0,-8)
+,group(
+  map(point(p[0],p[1]),p,product(0..6,0..6))
+ ,point(2,2) .. point(2,4) .. point(3,4) .. point(3,5) .. point(4,5) .. point(4,4) .. point(5,4) .. point(5,3) .. point(4,3) .. point(4,1) .. point(3,1) .. point(3,2),point(6,0) label("(2)")
+ )+vector(8,-8)
+,group(
+  map(point(p[0],p[1]),p,product(0..6,0..6))
+ ,point(1,2) .. point(1,3) .. point(2,3) .. point(2,5) .. point(3,5) .. point(3,3) .. point(5,3) .. point(5,2),point(6,0) label("(2)")
+ )+vector(16,-8)
+,group(
+  map(point(p[0],p[1]),p,product(0..6,0..6))
+ ,point(1,1) .. point(1,5) .. point(2,5) .. point(2,4) ..point(4,4) .. point(4,3) .. point(5,3) ..point(5,1)
+ )+vector(24,-8)
+,group(
+  map(point(p[0],p[1]),p,product(0..6,0..6))
+ ,point(1,3) .. point(1,4) .. point(4,4) .. point(4,2) .. point(3,2) .. point(3,3),point(6,0) label("(4)")
+ )+vector(0,-16)
+,group(
+  map(point(p[0],p[1]),p,product(0..6,0..6))
+ ,point(1,1) .. point(1,3) .. point(3,3) .. point(3,4) .. point(4,4) .. point(4,1),point(6,0) label("(3)")
+ )+vector(8,-16)
+,group(
+  map(point(p[0],p[1]),p,product(0..6,0..6))
+ ,point(1,2) .. point(1,4) .. point(2,4) .. point(2,5) .. point(3,5) .. point(3,4) .. point(4,4) .. point(4,2),point(6,0) label("(4)")
+ )+vector(16,-16)
+,group(
+  map(point(p[0],p[1]),p,product(0..6,0..6))
+ ,point(1,2) .. point(1,4) .. point(3,4) .. point(3,3) .. point(4,3) .. point(4,2),point(6,0) label("(4)")
+ )+vector(24,-16)
+,point(0,-1) label("add an extra square so that the shape has at least one line of symmetry the (number) is the number of solutions",deg(0),0.001) size(1.8)
+,point(0,-9) label("to give the overall shape a line of symmetry, try to find all possible positions for the one extra square for these:",deg(0),0.001) size(1.8)
+]*size(2))
+`);
+
+show_diagram(`
+// based on http://pythagoreantriples.blogspot.com/2013/04/finding-length-in-pt-traingle.html
+eukleides("What is the length AC?",let(
+ [a,x,y,z],rectangle(30,24)
+,b,y-vector(12,0)
+,v,b-x
+,c,intersection(perpendicular(line(x,b),a),line(x,b))
+,[
+  a..x
+ ,y..x label(24)
+ ,b..y label(7)
+ ,z..b label(18)
+ ,x..c label(7)
+ ,z..a
+ ,angle(a,z,y) right
+ ,angle(z,y,x) right
+ ,x..b
+ ,a label("A",deg(-135))
+ ,c label("C",argument(c-a))
+ ,a..c..b filled color3
+ ,a..c..b
+ ,angle(b,c,a) right
+ ] * size(8)
+))
+`);
+
+show_diagram(`
 eukleides("Mouse input and animation demo",
 -2,-2,5,2,[
   let(theta,argument(vector(mousex,mousey)),
@@ -849,7 +849,7 @@ points,map(point(2,deg(x)),x,0..360#step),
        [a..b,b..c,angle(a,b,c) triple dashed]
     ),
     let(a,point(1,2), b,point(0,2), c,point(1,3),
-       [a..b,b..c,angle(a,b,c) dotted]
+       [a..b,b..c,angle(a,b,c) simple dotted]
     ),
     let(a,point(2,2), b,point(1,2), c,point(2,3),
        [a..b,b..c,angle(a,b,c) double dotted]

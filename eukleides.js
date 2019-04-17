@@ -1749,14 +1749,16 @@ class SVGDrawer extends Drawer {
     check_angle_style() { }
 
 
-    set_fill(e) {
-        switch(this.local.style) {
-            case DOTTED:
-                e.setAttribute('mask','url(#eukleides-mask-dots)');
-                break;
-            case DASHED:
-                e.setAttribute('mask','url(#eukleides-mask-stripes)');
-                break;
+    set_fill(e,apply_pattern=true) {
+        if(apply_pattern) {
+            switch(this.local.style) {
+                case DOTTED:
+                    e.setAttribute('mask','url(#eukleides-mask-dots)');
+                    break;
+                case DASHED:
+                    e.setAttribute('mask','url(#eukleides-mask-stripes)');
+                    break;
+            }
         }
         e.setAttribute('fill',this.local.color);
         e.style.opacity = this.local.opacity;
@@ -1914,7 +1916,7 @@ class SVGDrawer extends Drawer {
     
     draw_dot(x,y,r) {
         const c = this.element('circle',{cx: x, cy: y, r: r});
-        this.set_fill(c);
+        this.set_fill(c,false);
         return c;
     }
 
@@ -2011,7 +2013,7 @@ class SVGDrawer extends Drawer {
                     return disc;
                 case BOX:
                     const r = this.element('rect',{x:A.x-size, y:A.y-size, width: 2*size, height: 2*size});
-                    this.set_fill(r);
+                    this.set_fill(r,false);
                     return r;
                 case PLUS:
                     const plus = this.element('path',{
@@ -2043,7 +2045,7 @@ class SVGDrawer extends Drawer {
     draw_text(text,x,y) {
         const e = this.element('text',{x:x,y:-y,'dominant-baseline': 'central', transform: 'scale(1,-1)'},clean_label(text));
         this.set_font(e);
-        this.set_fill(e);
+        this.set_fill(e,false);
         return e;
     }
 
@@ -2151,7 +2153,7 @@ class SVGDrawer extends Drawer {
             this.element('path',{d:`M -2 1 L 0.0362998 0.0803779 A 0.088194 0.088194 0 0 0 0.0362998 -0.0803779 L -2 -1 L -1 0 z`}),
             `translate(${dp(x)} ${dp(y)}) rotate(${dp(RTOD(angle))}) scale(${dp(size)})`
         );
-        this.set_fill(p);
+        this.set_fill(p,false);
         return p;
     }
 
@@ -2179,6 +2181,7 @@ class SVGDrawer extends Drawer {
                 switch(this.local.dec) {
                     case DOTTED:
                         [x1,y1,x2,y2] = this.set_xy(A,B,C,this.SIZE(Math.sqrt(2)/8));
+                        console.log(x1,y1,x2,y2);
                         g.appendChild(this.draw_dot(B.x+x1+x2,B.y+y1+y2,this.SIZE(0.05)));
                         desc += ' marked with a dot';
                         break;

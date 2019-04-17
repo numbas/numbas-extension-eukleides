@@ -23,6 +23,37 @@ const type_descriptions = {
     'eukleides_angle_label': 'A curve showing the angle defined by three points.'
 }
 
+const modifier_descriptions = {
+    'origin': 'The point at coordinates (0,0).',
+    'dot': 'Points are drawn as solid dots.',
+    'disc': 'Points are drawn as hollow discs.',
+    'box': 'Points are drawn as solid squares.',
+    'plus': 'Points are drawn as + shapes.',
+    'cross': 'Points are drawn as x shapes.',
+    'closed': 'Point sets are drawn as closed polygons - the last point is joined to the first.',
+    'open': 'Point sets are drawn as open paths.',
+    'filled': 'Point sets are drawn as filled polygons.',
+    'simple': 'Segments and angle labels are marked with a single dash.',
+    'double': 'Segments and angle labels are marked with a double dash. If <code>dotted</code> is also applied, angle labels will instead be labelled with two dots.',
+    'triple': 'Segments and angle labels are marked with a triple dash. If <code>dotted</code> is also applied, angle labels will instead be labelled with three dots.',
+    'full': 'Lines are drawn as continuous lines. This is the default.',
+    'dotted': 'Lines and filled shapes are drawn with a dotted pattern.',
+    'dashed': 'Lines are drawn with a dashed pattern, and filled shapes are drawn with stripes.',
+    'entire': 'Draw lines and conics as far as possible in both directions.',
+    'half': 'Only draw lines and curves in the direction specified. The default is forwards.',
+    'right': 'Draw angle labels as right angles.',
+    'forth': 'When <code>half</code> is applied, draw lines and curves in the forward direction. Arrows on line segments are drawn on the last point. Arrows on angle labels are drawn pointing anti-clockwise.',
+    'back': 'When <code>half</code> is applied, draw lines and curves in the backward direction. Arrows on line segments are drawn on the first point. Arrows on angle labels are drawn pointing clockwise.',
+    'noarrow': 'Do not draw an arrow on segments or angle labels. This is the default.',
+    'arrow': 'Draw an arrow on line segments and angle labels, in the direction specified by <code>forth</code> or <code>back</code>.',
+    'arrows': 'Draw arrows on both ends of line segments and angle labels.',
+    'transparent': 'Set the opacity to 0.5.',
+    'bold': 'Text is drawn in boldface.',
+    'italic': 'Text is drawn in italic style.',
+    'verbose': 'Accessible descriptions give information not explicitly given in the visual rendering, such as coordinates and bearings.',
+    'nospoilers': 'Accessible descriptions will not give any information not explicitly given in the visual rendering.',
+};
+
 function nice_type_name(name) {
     return nice_type_names[name] || name;
 }
@@ -169,7 +200,7 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
     })
     const fn_alphabet = document.getElementById('fn-alphabet');
     let last_letter = '';
-    Object.entries(fn_definitions).forEach(([name,defs])=>{
+    Object.entries(fn_definitions).sort().forEach(([name,defs])=>{
         const initial = name[0].toLowerCase();
         let anchor = '';
         if(initial!=last_letter) {
@@ -181,6 +212,19 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
     });
     document.getElementById('function-definitions').innerHTML = fn_html;
 
+    let modifier_html = '';
+    let color_htmls = [];
+    Object.entries(euk.scope.allVariables()).sort().map(([name,value]) => {
+        const description = modifier_descriptions[name];
+        if(description) {
+            modifier_html += `<dt data-name="${name}">${name}</dt><dd>${description}</dd>`;
+        } else if(value.value.style.color!==undefined) {
+            color_htmls.push(`<span data-name="${name}" class="color">${name}</span>`);
+        }
+    });
+    modifier_html = `<p><strong>Colours:</strong> ${color_htmls.join(', ')}</p>` + modifier_html;
+    document.getElementById('modifiers').innerHTML = modifier_html;
+
     const code = document.getElementById('code');
     const output = document.getElementById('output');
     const error_display = document.getElementById('error');
@@ -189,24 +233,16 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
         Array.prototype.map.call(document.querySelectorAll('dt.active'),function(e) {
             e.classList.remove('active');
         });
-        let i = code.selectionStart - 1;
-        while(i>=0 && code.value[i].match(/[\w_]/)) {
-            i -= 1;
-        }
-        const m = Numbas.jme.Parser.prototype.re.re_name.exec(code.value.slice(i+1));
-        if(m) {
-            var name = m[0];
-            console.log(name);
-            const def = document.querySelector(`dt[data-name="${name}"]`);
-            console.log(def);
+        const name = code.value.slice(code.selectionStart,code.selectionEnd);
+        if(name) {
+            const def = document.querySelector(`[data-name="${name}"]`);
             if(def) {
+                console.log(def);
                 def.classList.add('active');
                 def.scrollIntoView({block: 'center'});
             }
         }
     }
-    code.addEventListener('click',look_at_selection);
-    code.addEventListener('keyup',look_at_selection);
     code.addEventListener('select',look_at_selection);
 
     let mx = 0, my = 0;

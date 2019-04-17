@@ -1,10 +1,18 @@
 # Eukleides extension for Numbas
 
-This extension for Numbas contains a port of the [Eukleides geometrical drawing language](http://eukleides.org/) by Christian Obrecht.
+This extension for Numbas contains a port of the [Eukleides geometrical drawing language](http://eukleides.org/) by Christian Obrecht, with extensions to make diagrams interactive and accessibility improvements.
 
 ## Documentation 
 
+There's [documentation on how the extension works and a full function reference](docs/index.md).
+
+See the [demo page](demo.html) for a gallery of examples, and the [interactive playground](playground.html) to draw your own diagrams.
+
 ## License
+
+&copy; 2019 Christian Lawson-Perfect for Newcastle University.
+
+The original Eukleides is &copy; 2004-2010 Christian Obrecht.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the

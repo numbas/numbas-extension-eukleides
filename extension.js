@@ -1201,7 +1201,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
 
     extension.scope.addFunction(new funcObj('divergent_color_schemes',[TInt],TList, function(n) {
         return new TList(get_color_schemes(n,'div'));
-    }, {unwrapValues: true, description: 'Get a list of colour schemesfor a divergent data set.'}));
+    }, {unwrapValues: true, description: 'Get a list of colour schemes for a divergent data set.'}));
 
     extension.scope.addFunction(new funcObj('qualitative_color_schemes',[TInt],TList, function(n) {
         return new TList(get_color_schemes(n,'qual'));
