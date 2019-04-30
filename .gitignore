@@ -2,3 +2,5 @@ eukleides.babel.js
 jme-runtime.js
 locales.js
 node_modules
+.watchmakerc
+package-lock.json

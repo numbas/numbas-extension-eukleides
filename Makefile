@@ -2,13 +2,17 @@ NUMBAS_RUNTIME_PATH=../dev
 BABEL=node_modules/.bin/babel
 make_current_dir=@mkdir -p $(@D)
 
-dist: dist/eukleides.js dist/demo.js
+dist: dist/eukleides.js dist/demo.js dist/playground.js
 
 dist/eukleides.js: dist/eukleides.babel.js extension.js
 	$(make_current_dir)
 	cat $^ > $@
 
 dist/demo.js: demo.js
+	$(make_current_dir)
+	$(BABEL) $< > $@
+
+dist/playground.js: playground.js
 	$(make_current_dir)
 	$(BABEL) $< > $@
 

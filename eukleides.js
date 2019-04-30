@@ -1749,14 +1749,16 @@ class SVGDrawer extends Drawer {
     check_angle_style() { }
 
 
-    set_fill(e) {
-        switch(this.local.style) {
-            case DOTTED:
-                e.setAttribute('mask','url(#eukleides-mask-dots)');
-                break;
-            case DASHED:
-                e.setAttribute('mask','url(#eukleides-mask-stripes)');
-                break;
+    set_fill(e,apply_pattern=true) {
+        if(apply_pattern) {
+            switch(this.local.style) {
+                case DOTTED:
+                    e.setAttribute('mask','url(#eukleides-mask-dots)');
+                    break;
+                case DASHED:
+                    e.setAttribute('mask','url(#eukleides-mask-stripes)');
+                    break;
+            }
         }
         e.setAttribute('fill',this.local.color);
         e.style.opacity = this.local.opacity;
@@ -1914,7 +1916,7 @@ class SVGDrawer extends Drawer {
     
     draw_dot(x,y,r) {
         const c = this.element('circle',{cx: x, cy: y, r: r});
-        this.set_fill(c);
+        this.set_fill(c,false);
         return c;
     }
 
@@ -2011,7 +2013,7 @@ class SVGDrawer extends Drawer {
                     return disc;
                 case BOX:
                     const r = this.element('rect',{x:A.x-size, y:A.y-size, width: 2*size, height: 2*size});
-                    this.set_fill(r);
+                    this.set_fill(r,false);
                     return r;
                 case PLUS:
                     const plus = this.element('path',{
@@ -2043,7 +2045,7 @@ class SVGDrawer extends Drawer {
     draw_text(text,x,y) {
         const e = this.element('text',{x:x,y:-y,'dominant-baseline': 'central', transform: 'scale(1,-1)'},clean_label(text));
         this.set_font(e);
-        this.set_fill(e);
+        this.set_fill(e,false);
         return e;
     }
 
@@ -2151,7 +2153,7 @@ class SVGDrawer extends Drawer {
             this.element('path',{d:`M -2 1 L 0.0362998 0.0803779 A 0.088194 0.088194 0 0 0 0.0362998 -0.0803779 L -2 -1 L -1 0 z`}),
             `translate(${dp(x)} ${dp(y)}) rotate(${dp(RTOD(angle))}) scale(${dp(size)})`
         );
-        this.set_fill(p);
+        this.set_fill(p,false);
         return p;
     }
 
@@ -2179,6 +2181,7 @@ class SVGDrawer extends Drawer {
                 switch(this.local.dec) {
                     case DOTTED:
                         [x1,y1,x2,y2] = this.set_xy(A,B,C,this.SIZE(Math.sqrt(2)/8));
+                        console.log(x1,y1,x2,y2);
                         g.appendChild(this.draw_dot(B.x+x1+x2,B.y+y1+y2,this.SIZE(0.05)));
                         desc += ' marked with a dot';
                         break;
@@ -2765,6 +2768,9 @@ Dark2:  {3: ['rgb(27,158,119)', 'rgb(217,95,2)', 'rgb(117,112,179)'], 4: ['rgb(2
 Paired:  {3: ['rgb(166,206,227)', 'rgb(31,120,180)', 'rgb(178,223,138)'], 4: ['rgb(166,206,227)', 'rgb(31,120,180)', 'rgb(178,223,138)', 'rgb(51,160,44)'], 5: ['rgb(166,206,227)', 'rgb(31,120,180)', 'rgb(178,223,138)', 'rgb(51,160,44)', 'rgb(251,154,153)'], 6: ['rgb(166,206,227)', 'rgb(31,120,180)', 'rgb(178,223,138)', 'rgb(51,160,44)', 'rgb(251,154,153)', 'rgb(227,26,28)'], 7: ['rgb(166,206,227)', 'rgb(31,120,180)', 'rgb(178,223,138)', 'rgb(51,160,44)', 'rgb(251,154,153)', 'rgb(227,26,28)', 'rgb(253,191,111)'], 8: ['rgb(166,206,227)', 'rgb(31,120,180)', 'rgb(178,223,138)', 'rgb(51,160,44)', 'rgb(251,154,153)', 'rgb(227,26,28)', 'rgb(253,191,111)', 'rgb(255,127,0)'], 9: ['rgb(166,206,227)', 'rgb(31,120,180)', 'rgb(178,223,138)', 'rgb(51,160,44)', 'rgb(251,154,153)', 'rgb(227,26,28)', 'rgb(253,191,111)', 'rgb(255,127,0)', 'rgb(202,178,214)'], 10: ['rgb(166,206,227)', 'rgb(31,120,180)', 'rgb(178,223,138)', 'rgb(51,160,44)', 'rgb(251,154,153)', 'rgb(227,26,28)', 'rgb(253,191,111)', 'rgb(255,127,0)', 'rgb(202,178,214)', 'rgb(106,61,154)'], 11: ['rgb(166,206,227)', 'rgb(31,120,180)', 'rgb(178,223,138)', 'rgb(51,160,44)', 'rgb(251,154,153)', 'rgb(227,26,28)', 'rgb(253,191,111)', 'rgb(255,127,0)', 'rgb(202,178,214)', 'rgb(106,61,154)', 'rgb(255,255,153)'], 12: ['rgb(166,206,227)', 'rgb(31,120,180)', 'rgb(178,223,138)', 'rgb(51,160,44)', 'rgb(251,154,153)', 'rgb(227,26,28)', 'rgb(253,191,111)', 'rgb(255,127,0)', 'rgb(202,178,214)', 'rgb(106,61,154)', 'rgb(255,255,153)', 'rgb(177,89,40)'], 'properties':{'type': 'qual','blind':[1,1,2,2,2,2,0,0,0],'print':[1,1,1,1,1,2,2,2,2],'copy':[0],'screen':[1,1,1,1,1,1,1,1,2] } } ,
 Pastel2:  {3: ['rgb(179,226,205)', 'rgb(253,205,172)', 'rgb(203,213,232)'], 4: ['rgb(179,226,205)', 'rgb(253,205,172)', 'rgb(203,213,232)', 'rgb(244,202,228)'], 5: ['rgb(179,226,205)', 'rgb(253,205,172)', 'rgb(203,213,232)', 'rgb(244,202,228)', 'rgb(230,245,201)'], 6: ['rgb(179,226,205)', 'rgb(253,205,172)', 'rgb(203,213,232)', 'rgb(244,202,228)', 'rgb(230,245,201)', 'rgb(255,242,174)'], 7: ['rgb(179,226,205)', 'rgb(253,205,172)', 'rgb(203,213,232)', 'rgb(244,202,228)', 'rgb(230,245,201)', 'rgb(255,242,174)', 'rgb(241,226,204)'], 8: ['rgb(179,226,205)', 'rgb(253,205,172)', 'rgb(203,213,232)', 'rgb(244,202,228)', 'rgb(230,245,201)', 'rgb(255,242,174)', 'rgb(241,226,204)', 'rgb(204,204,204)'], 'properties':{'type': 'qual','blind':[2,0,0,0,0,0],'print':[2,0,0,0,0,0],'copy':[0],'screen':[2,2,0,0,0,0] } } ,
 Pastel1:  {3: ['rgb(251,180,174)', 'rgb(179,205,227)', 'rgb(204,235,197)'], 4: ['rgb(251,180,174)', 'rgb(179,205,227)', 'rgb(204,235,197)', 'rgb(222,203,228)'], 5: ['rgb(251,180,174)', 'rgb(179,205,227)', 'rgb(204,235,197)', 'rgb(222,203,228)', 'rgb(254,217,166)'], 6: ['rgb(251,180,174)', 'rgb(179,205,227)', 'rgb(204,235,197)', 'rgb(222,203,228)', 'rgb(254,217,166)', 'rgb(255,255,204)'], 7: ['rgb(251,180,174)', 'rgb(179,205,227)', 'rgb(204,235,197)', 'rgb(222,203,228)', 'rgb(254,217,166)', 'rgb(255,255,204)', 'rgb(229,216,189)'], 8: ['rgb(251,180,174)', 'rgb(179,205,227)', 'rgb(204,235,197)', 'rgb(222,203,228)', 'rgb(254,217,166)', 'rgb(255,255,204)', 'rgb(229,216,189)', 'rgb(253,218,236)'], 9: ['rgb(251,180,174)', 'rgb(179,205,227)', 'rgb(204,235,197)', 'rgb(222,203,228)', 'rgb(254,217,166)', 'rgb(255,255,204)', 'rgb(229,216,189)', 'rgb(253,218,236)', 'rgb(242,242,242)'], 'properties':{'type': 'qual','blind':[2,0,0,0,0,0,0],'print':[2,2,2,0,0,0,0],'copy':[0],'screen':[2,2,2,2,0,0,0] } } ,
+
+// from https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
+Trubetskoy: {3: ['#ffe119','#4363d8','#f58231'], 4: ['#ffe119','#4363d8','#f58231','#e6beff'], 5: ['#ffe119','#4363d8','#f58231','#e6beff','#800000'], 6: ['#ffe119','#4363d8','#f58231','#e6beff','#800000','#000075'], 'properties': {'type': 'qual','blind':[1],'print':[1],'copy':[1],'screen':[1] } },
 
 /*** Sequential ***/
 OrRd:  {3: ['rgb(254,232,200)', 'rgb(253,187,132)', 'rgb(227,74,51)'], 4: ['rgb(254,240,217)', 'rgb(253,204,138)', 'rgb(252,141,89)', 'rgb(215,48,31)'], 5: ['rgb(254,240,217)', 'rgb(253,204,138)', 'rgb(252,141,89)', 'rgb(227,74,51)', 'rgb(179,0,0)'], 6: ['rgb(254,240,217)', 'rgb(253,212,158)', 'rgb(253,187,132)', 'rgb(252,141,89)', 'rgb(227,74,51)', 'rgb(179,0,0)'], 7: ['rgb(254,240,217)', 'rgb(253,212,158)', 'rgb(253,187,132)', 'rgb(252,141,89)', 'rgb(239,101,72)', 'rgb(215,48,31)', 'rgb(153,0,0)'], 8: ['rgb(255,247,236)', 'rgb(254,232,200)', 'rgb(253,212,158)', 'rgb(253,187,132)', 'rgb(252,141,89)', 'rgb(239,101,72)', 'rgb(215,48,31)', 'rgb(153,0,0)'], 9: ['rgb(255,247,236)', 'rgb(254,232,200)', 'rgb(253,212,158)', 'rgb(253,187,132)', 'rgb(252,141,89)', 'rgb(239,101,72)', 'rgb(215,48,31)', 'rgb(179,0,0)', 'rgb(127,0,0)'], 'properties':{'type': 'seq','blind':[1],'print':[1,1,0,0,0,0,0],'copy':[1,1,2,0,0,0,0],'screen':[1,1,1,0,0,0,0] } } ,
