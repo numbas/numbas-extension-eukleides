@@ -24,10 +24,12 @@ dist/eukleides.babel.js: eukleides.js
 
 extension.js: numbas
 
-numbas: jme-runtime.js locales.js
+numbas: lib/jme-runtime.js lib/locales.js
 
-jme-runtime.js: $(NUMBAS_RUNTIME_PATH)/tests/jme-runtime.js
+lib/jme-runtime.js: $(NUMBAS_RUNTIME_PATH)/tests/jme-runtime.js
+	$(make_current_dir)
 	cp $< $@
 
-locales.js: $(NUMBAS_RUNTIME_PATH)/tests/locales.js
+lib/locales.js: $(NUMBAS_RUNTIME_PATH)/tests/locales.js
+	$(make_current_dir)
 	cp $< $@
