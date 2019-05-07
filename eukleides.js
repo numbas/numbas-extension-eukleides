@@ -684,7 +684,7 @@ class Conic extends Obj {
         this.y = v.y;
     }
 
-    static create_with_directrix(A,l,x) {
+    static create_with_directrix(A,l,e) {
         const c = cos(l.a);
         const s = sin(l.a);
         const d = s*(A.x-l.x) - c*(A.y-l.y);
@@ -693,7 +693,7 @@ class Conic extends Obj {
         }
         const dd = principal(l.a + (d<0 ? PI/2 : -PI/2));
         if(e==1) {
-            return new Parabola(dd, abs(d), A);
+            return new Parabola(A, abs(d), dd);
         } else {
             const h = 1/e - e;
             const f = abs(d)*e/h;
