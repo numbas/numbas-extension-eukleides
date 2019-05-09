@@ -1362,6 +1362,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         var takes_input = all_free_vars.find(function(n){return ['mousex','mousey'].contains(n)})!==undefined;
 
         this.free_vars = jme.findvars(objects,['time','mousex','mousey'].concat(Object.keys(ctx.scope.allVariables())));
+        this.optimise_names = {};
         initial_values = initial_values || {};
         this.values = [];
         this.free_vars.forEach(function(n) {
@@ -1456,6 +1457,9 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         make_draggable: function(element, optimise_names) {
             var ctx = this;
             var id = element.getAttribute('data-eukleides-id');
+            optimise_names = optimise_names || ctx.free_vars;
+            optimise_names = optimise_names.filter(function(n){ return ctx.free_vars.contains(n)});
+            ctx.optimise_names[id] = optimise_names;
             if(this.elements[id]) {
                 return;
             }
@@ -1468,14 +1472,12 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
                 return {x:cx,y:cy};
             }
             var last_good_values = null;
-            optimise_names = optimise_names || ctx.free_vars;
-            optimise_names = optimise_names.filter(function(n){ return ctx.free_vars.contains(n)});
             function onstart() {
                 var initial = get_position(ctx.elements);
                 function ondrag(dx,dy) {
                     function fill_remaining_values(vs) {
                         var values = ctx.values.slice();
-                        optimise_names.forEach(function(n,i) {
+                        ctx.optimise_names[id].forEach(function(n,i) {
                             var j = ctx.free_vars.indexOf(n);
                             values[j] = vs[i];
                         });
@@ -1495,7 +1497,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
                     function gradZero(values) {
                         return grad(values).every(function(x){return x==0});
                     }
-                    var values = optimise_names.map(function(n) {
+                    var values = ctx.optimise_names[id].map(function(n) {
                         var i = ctx.free_vars.indexOf(n);
                         return ctx.values[i];
                     });
