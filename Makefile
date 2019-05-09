@@ -8,15 +8,15 @@ dist/eukleides.js: dist/eukleides.babel.js extension.js
 	$(make_current_dir)
 	cat $^ > $@
 
-dist/demo.js: demo.js
+dist/demo.js: demo.js .babelrc
 	$(make_current_dir)
 	$(BABEL) $< > $@
 
-dist/playground.js: playground.js
+dist/playground.js: playground.js .babelrc
 	$(make_current_dir)
 	$(BABEL) $< > $@
 
-dist/eukleides.babel.js: eukleides.js
+dist/eukleides.babel.js: eukleides.js .babelrc
 	$(make_current_dir)
 	@echo "(function() {var exports = {};" > $@
 	$(BABEL) $< >> $@

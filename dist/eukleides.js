@@ -1120,7 +1120,7 @@ function (_Obj4) {
     }
   }], [{
     key: "create_with_directrix",
-    value: function create_with_directrix(A, l, x) {
+    value: function create_with_directrix(A, l, e) {
       var c = cos(l.a);
       var s = sin(l.a);
       var d = s * (A.x - l.x) - c * (A.y - l.y);
@@ -1132,7 +1132,7 @@ function (_Obj4) {
       var dd = principal(l.a + (d < 0 ? PI / 2 : -PI / 2));
 
       if (e == 1) {
-        return new Parabola(dd, abs(d), A);
+        return new Parabola(A, abs(d), dd);
       } else {
         var h = 1 / e - e;
         var f = abs(d) * e / h;
@@ -1140,9 +1140,9 @@ function (_Obj4) {
           x: A.x + s * f,
           y: A.y - c * f
         },
-            _x = _x$y.x,
+            x = _x$y.x,
             y = _x$y.y;
-        var v = new Point(_x, y);
+        var v = new Point(x, y);
         var a = abs(d / h);
 
         if (e < 1) {
@@ -1314,7 +1314,7 @@ function (_Conic2) {
       } else {
         var _parametric_hyperbola3 = parametric_hyperbola(t, this.x, this.y, this.a, this.b, c, s),
             _parametric_hyperbola4 = _slicedToArray(_parametric_hyperbola3, 2),
-            _x2 = _parametric_hyperbola4[0],
+            _x = _parametric_hyperbola4[0],
             _y = _parametric_hyperbola4[1];
 
         a = atan2(-this.b, -this.a * cos(t));
@@ -2084,10 +2084,9 @@ function circle_set_intersection(set, c) {
     for (var _iterator4 = set.points[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
       var t = _step4.value;
       var d = dist(s);
+      var e = dist(t);
 
-      var _e2 = dist(t);
-
-      if (d >= c.r || _e2 >= c.r) {
+      if (d >= c.r || e >= c.r) {
         var f = s.distance(t);
         var x = s.x - c.x;
         var y = s.y - c.y;
@@ -2607,9 +2606,9 @@ function (_Drawer) {
 
         try {
           for (var _iterator6 = this.svg.querySelectorAll("[data-eukleides-id=\"".concat(id, "\"]"))[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-            var _e3 = _step6.value;
+            var _e2 = _step6.value;
 
-            _e3.parentElement.removeChild(_e3);
+            _e2.parentElement.removeChild(_e2);
           }
         } catch (err) {
           _didIteratorError6 = true;
@@ -5935,6 +5934,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         var takes_input = all_free_vars.find(function(n){return ['mousex','mousey'].contains(n)})!==undefined;
 
         this.free_vars = jme.findvars(objects,['time','mousex','mousey'].concat(Object.keys(ctx.scope.allVariables())));
+        this.optimise_names = {};
         initial_values = initial_values || {};
         this.values = [];
         this.free_vars.forEach(function(n) {
@@ -6029,6 +6029,9 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         make_draggable: function(element, optimise_names) {
             var ctx = this;
             var id = element.getAttribute('data-eukleides-id');
+            optimise_names = optimise_names || ctx.free_vars;
+            optimise_names = optimise_names.filter(function(n){ return ctx.free_vars.contains(n)});
+            ctx.optimise_names[id] = optimise_names;
             if(this.elements[id]) {
                 return;
             }
@@ -6041,14 +6044,12 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
                 return {x:cx,y:cy};
             }
             var last_good_values = null;
-            optimise_names = optimise_names || ctx.free_vars;
-            optimise_names = optimise_names.filter(function(n){ return ctx.free_vars.contains(n)});
             function onstart() {
                 var initial = get_position(ctx.elements);
                 function ondrag(dx,dy) {
                     function fill_remaining_values(vs) {
                         var values = ctx.values.slice();
-                        optimise_names.forEach(function(n,i) {
+                        ctx.optimise_names[id].forEach(function(n,i) {
                             var j = ctx.free_vars.indexOf(n);
                             values[j] = vs[i];
                         });
@@ -6068,7 +6069,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
                     function gradZero(values) {
                         return grad(values).every(function(x){return x==0});
                     }
-                    var values = optimise_names.map(function(n) {
+                    var values = ctx.optimise_names[id].map(function(n) {
                         var i = ctx.free_vars.indexOf(n);
                         return ctx.values[i];
                     });
