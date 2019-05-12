@@ -57,6 +57,30 @@ circle(point(2,deg(30)),3)
 ]) size(2)
 ])`);
 
+    show_diagram(`
+eukleides("Triangle orthocentre",[
+let(
+  [a,b,c],triangle(2l,deg(r))
+, [
+   a..b..c
+
+  , a..midpoint(b..c) dashed
+  , b..midpoint(a..c) dashed
+  , c..midpoint(a..b) dashed
+
+  , circle(a,b,c)
+
+  , a,b,c
+  , a label("A",argument(a-midpoint(c..b)))
+  , b label("B",argument(b-midpoint(a..c)))
+  , c label("C",argument(c-midpoint(a..b)))
+
+  , center(a..b..c) draggable()
+  ]
+)
+],["l":2,"r":0])
+`);
+
     show_diagram(`eukleides("Interactive plot of sine curve",
 -2,-1.7,2*pi+1,2,
 [

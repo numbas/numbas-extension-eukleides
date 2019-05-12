@@ -8,15 +8,15 @@ dist/eukleides.js: dist/eukleides.babel.js extension.js
 	$(make_current_dir)
 	cat $^ > $@
 
-dist/demo.js: demo.js
+dist/demo.js: demo.js .babelrc
 	$(make_current_dir)
 	$(BABEL) $< > $@
 
-dist/playground.js: playground.js
+dist/playground.js: playground.js .babelrc
 	$(make_current_dir)
 	$(BABEL) $< > $@
 
-dist/eukleides.babel.js: eukleides.js
+dist/eukleides.babel.js: eukleides.js .babelrc
 	$(make_current_dir)
 	@echo "(function() {var exports = {};" > $@
 	$(BABEL) $< >> $@
@@ -24,10 +24,12 @@ dist/eukleides.babel.js: eukleides.js
 
 extension.js: numbas
 
-numbas: jme-runtime.js locales.js
+numbas: lib/jme-runtime.js lib/locales.js
 
-jme-runtime.js: $(NUMBAS_RUNTIME_PATH)/tests/jme-runtime.js
+lib/jme-runtime.js: $(NUMBAS_RUNTIME_PATH)/tests/jme-runtime.js
+	$(make_current_dir)
 	cp $< $@
 
-locales.js: $(NUMBAS_RUNTIME_PATH)/tests/locales.js
+lib/locales.js: $(NUMBAS_RUNTIME_PATH)/tests/locales.js
+	$(make_current_dir)
 	cp $< $@
