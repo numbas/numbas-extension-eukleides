@@ -1,0 +1,35 @@
+{
+  "name": "numbas-eukleides-extension",
+  "version": "1.0.0",
+  "description": "Numbas Eukleides extension",
+  "main": "eukleides.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib"
+  },
+  "dependencies": {
+    "@babel/cli": "^7.5.5",
+    "@babel/core": "^7.5.5",
+    "@babel/preset-env": "^7.5.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/numbas/numbas-extension-eukleides.git"
+  },
+  "keywords": [
+    "eukleides",
+    "geometry",
+    "math",
+    "numbas"
+  ],
+  "author": "Christian Lawson-Perfect <christianperfect@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/numbas/numbas-extension-eukleides/issues"
+  },
+  "homepage": "https://github.com/numbas/numbas-extension-eukleides#readme"
+}
