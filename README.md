@@ -8,6 +8,28 @@ There's [documentation on how the extension works and a full function reference]
 
 See the [demo page](demo.html) for a gallery of examples, and the [interactive playground](playground.html) to draw your own diagrams.
 
+## Development
+
+The extension is written using ES6 syntax and features. This is compiled with [babeljs](https://babeljs.io/) to ES5, which is supported by lots more browsers.
+
+[dev_demo.html](dev_demo.html) and [dev_playground.html](dev_playground.html) load the source scripts directly, on browsers which support ES6.
+
+To install the babeljs tools, first install [nodejs](https://nodejs.org/en/) and then run:
+
+```
+npm install
+```
+
+Then, when you make a change to the source, run
+
+```
+make
+```
+
+to compile the scripts in the `dist` folder.
+
+You might need to set the environment variable `NUMBAS_RUNTIME_PATH` to the location of your [Numbas compiler](https://github.com/numbas/Numbas) directory.
+
 ## License
 
 &copy; 2019 Christian Lawson-Perfect for Newcastle University.

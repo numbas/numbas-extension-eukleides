@@ -1,4 +1,4 @@
-NUMBAS_RUNTIME_PATH=../dev
+NUMBAS_RUNTIME_PATH ?= ../dev
 BABEL=node_modules/.bin/babel
 make_current_dir=@mkdir -p $(@D)
 
