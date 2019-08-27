@@ -4955,6 +4955,19 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         description: 'Translate an object or list of objects by the opposite of the given vector.'
     }));
 
+    extension.scope.addFunction(new funcObj('sin',[TAngle],TNum,math.sin),
+    {description: 'Sine'});
+    extension.scope.addFunction(new funcObj('cos',[TAngle],TNum,math.cos),
+    {description: 'Cosine'});
+    extension.scope.addFunction(new funcObj('tan',[TAngle],TNum,math.tan),
+    {description: 'Tangent'});
+    extension.scope.addFunction(new funcObj('cosec',[TAngle],TNum,math.cosec),
+    {description: 'Cosecant'});
+    extension.scope.addFunction(new funcObj('sec',[TAngle],TNum,math.sec),
+    {description: 'Secant'});
+    extension.scope.addFunction(new funcObj('cot',[TAngle],TNum,math.cot),
+    {description: 'Tangent'});
+
     extension.scope.addFunction(new funcObj('+',[TAngle,TAngle],TAngle,math.add,
     {description: 'Add two angles.'}));
     extension.scope.addFunction(new funcObj('-u',[TAngle],TAngle,math.negate,
@@ -4967,6 +4980,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
     {description: 'Multiply an angle by the given scale factor.'}));
     extension.scope.addFunction(new funcObj('/',[TAngle,TNum],TAngle,math.div,
     {description: 'Divide an angle by the given scale factor.'}));
+
     extension.scope.addFunction(new funcObj('deg',[TNum],TAngle,function(degrees) {
         var rad = math.radians(degrees);
         return rad;
