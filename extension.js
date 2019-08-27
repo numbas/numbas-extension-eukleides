@@ -1314,7 +1314,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
              * getBBox doesn't apply the transformation, even though it should,
              * so we have to flip the y coordinate manually
              */
-            var y = m.d>0 ? r.y : -(r.y+r.height);  
+            var y = c.tagName!='text' ? r.y : -(r.y+r.height);  
 
             min_x = Math.min(min_x, r.x);
             min_y = Math.min(min_y, y);

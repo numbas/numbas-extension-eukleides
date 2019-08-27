@@ -8,9 +8,7 @@ window.eukleides = euk;
 
 window.run_demo = function () {
   var PI = Math.PI;
-  Numbas.queueScript('base', [], function () {
-    console.log('oii');
-  });
+  Numbas.queueScript('base', [], function () {});
   Numbas.queueScript('demo', ['extensions/eukleides/eukleides.js'], function () {
     var s = window.s = new Numbas.jme.Scope([Numbas.jme.builtinScope, Numbas.extensions.eukleides.scope]);
     var examples = document.getElementById('examples');
