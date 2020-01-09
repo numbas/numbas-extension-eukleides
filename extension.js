@@ -1606,6 +1606,9 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         if(args.length<=3) {
             initial_values = args[2];
         } else {
+            for(var i=1;i<5;i++) {
+                vars = vars.concat(jme.findvars(args[i],boundvars,scope));
+            }
             initial_values = args[6];
         }
         if(initial_values) {
