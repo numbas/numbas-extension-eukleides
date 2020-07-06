@@ -24,25 +24,31 @@ function _get(target, property, receiver) { if (typeof Reflect !== "undefined" &
 
 function _superPropBase(object, property) { while (!Object.prototype.hasOwnProperty.call(object, property)) { object = _getPrototypeOf(object); if (object === null) break; } return object; }
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
+function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e3) { throw _e3; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e4) { didErr = true; err = _e4; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+
 function _wrapNativeSuper(Class) { var _cache = typeof Map === "function" ? new Map() : undefined; _wrapNativeSuper = function _wrapNativeSuper(Class) { if (Class === null || !_isNativeFunction(Class)) return Class; if (typeof Class !== "function") { throw new TypeError("Super expression must either be null or a function"); } if (typeof _cache !== "undefined") { if (_cache.has(Class)) return _cache.get(Class); _cache.set(Class, Wrapper); } function Wrapper() { return _construct(Class, arguments, _getPrototypeOf(this).constructor); } Wrapper.prototype = Object.create(Class.prototype, { constructor: { value: Wrapper, enumerable: false, writable: true, configurable: true } }); return _setPrototypeOf(Wrapper, Class); }; return _wrapNativeSuper(Class); }
 
-function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
-function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
+function _construct(Parent, args, Class) { if (_isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
 
 function _isNativeFunction(fn) { return Function.toString.call(fn).indexOf("[native code]") !== -1; }
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
@@ -50,15 +56,19 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -155,17 +165,17 @@ var Obj = function Obj() {
 
 exports.Obj = Obj;
 
-var Point =
-/*#__PURE__*/
-function (_Obj) {
+var Point = /*#__PURE__*/function (_Obj) {
   _inherits(Point, _Obj);
+
+  var _super = _createSuper(Point);
 
   function Point(x, y) {
     var _this;
 
     _classCallCheck(this, Point);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(Point).call(this));
+    _this = _super.call(this);
     _this.x = x;
     _this.y = y;
     return _this;
@@ -346,17 +356,17 @@ function (_Obj) {
 
 exports.Point = Point;
 
-var Vector =
-/*#__PURE__*/
-function (_Object) {
+var Vector = /*#__PURE__*/function (_Object) {
   _inherits(Vector, _Object);
+
+  var _super2 = _createSuper(Vector);
 
   function Vector(x, y) {
     var _this2;
 
     _classCallCheck(this, Vector);
 
-    _this2 = _possibleConstructorReturn(this, _getPrototypeOf(Vector).call(this));
+    _this2 = _super2.call(this);
     _this2.x = x;
     _this2.y = y;
     return _this2;
@@ -456,21 +466,21 @@ function (_Object) {
   }]);
 
   return Vector;
-}(_wrapNativeSuper(Object));
+}( /*#__PURE__*/_wrapNativeSuper(Object));
 
 exports.Vector = Vector;
 
-var Line =
-/*#__PURE__*/
-function (_Object2) {
+var Line = /*#__PURE__*/function (_Object2) {
   _inherits(Line, _Object2);
+
+  var _super3 = _createSuper(Line);
 
   function Line(x, y, a) {
     var _this3;
 
     _classCallCheck(this, Line);
 
-    _this3 = _possibleConstructorReturn(this, _getPrototypeOf(Line).call(this));
+    _this3 = _super3.call(this);
     _this3.x = x;
     _this3.y = y;
     _this3.a = a;
@@ -641,7 +651,7 @@ function (_Object2) {
   }]);
 
   return Line;
-}(_wrapNativeSuper(Object));
+}( /*#__PURE__*/_wrapNativeSuper(Object));
 
 exports.Line = Line;
 
@@ -651,17 +661,17 @@ function point_line_distance(A, l) {
   return abs(s * (A.x - l.x) - c * (A.y - l.y));
 }
 
-var Set =
-/*#__PURE__*/
-function (_Obj2) {
+var Set = /*#__PURE__*/function (_Obj2) {
   _inherits(Set, _Obj2);
+
+  var _super4 = _createSuper(Set);
 
   function Set(points) {
     var _this4;
 
     _classCallCheck(this, Set);
 
-    _this4 = _possibleConstructorReturn(this, _getPrototypeOf(Set).call(this));
+    _this4 = _super4.call(this);
     _this4.points = points.slice();
     return _this4;
   }
@@ -790,29 +800,20 @@ function (_Obj2) {
     value: function isobarycenter() {
       var x = 0;
       var y = 0;
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+
+      var _iterator = _createForOfIteratorHelper(this.points),
+          _step;
 
       try {
-        for (var _iterator = this.points[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var p = _step.value;
           x += p.x;
           y += p.y;
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _iterator.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return != null) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        _iterator.f();
       }
 
       var n = this.points.length;
@@ -938,17 +939,17 @@ function compute_area(A, B) {
   }
 }
 
-var Circle =
-/*#__PURE__*/
-function (_Obj3) {
+var Circle = /*#__PURE__*/function (_Obj3) {
   _inherits(Circle, _Obj3);
+
+  var _super5 = _createSuper(Circle);
 
   function Circle(center, r) {
     var _this5;
 
     _classCallCheck(this, Circle);
 
-    _this5 = _possibleConstructorReturn(this, _getPrototypeOf(Circle).call(this));
+    _this5 = _super5.call(this);
     _this5.x = center.x;
     _this5.y = center.y;
     _this5.r = r;
@@ -1029,17 +1030,17 @@ function (_Obj3) {
 
 exports.Circle = Circle;
 
-var Conic =
-/*#__PURE__*/
-function (_Obj4) {
+var Conic = /*#__PURE__*/function (_Obj4) {
   _inherits(Conic, _Obj4);
+
+  var _super6 = _createSuper(Conic);
 
   function Conic(v, a, b, d) {
     var _this6;
 
     _classCallCheck(this, Conic);
 
-    _this6 = _possibleConstructorReturn(this, _getPrototypeOf(Conic).call(this));
+    _this6 = _super6.call(this);
     _this6.d = d;
     _this6.b = b;
     _this6.a = a;
@@ -1189,10 +1190,10 @@ function (_Obj4) {
 
 exports.Conic = Conic;
 
-var Ellipse =
-/*#__PURE__*/
-function (_Conic) {
+var Ellipse = /*#__PURE__*/function (_Conic) {
   _inherits(Ellipse, _Conic);
+
+  var _super7 = _createSuper(Ellipse);
 
   function Ellipse(v, a, b, d) {
     _classCallCheck(this, Ellipse);
@@ -1201,7 +1202,7 @@ function (_Conic) {
       throw new Error("invalid parameters");
     }
 
-    return _possibleConstructorReturn(this, _getPrototypeOf(Ellipse).call(this, v, a, b, d));
+    return _super7.call(this, v, a, b, d);
   }
 
   _createClass(Ellipse, [{
@@ -1251,15 +1252,15 @@ function (_Conic) {
 
 exports.Ellipse = Ellipse;
 
-var Hyperbola =
-/*#__PURE__*/
-function (_Conic2) {
+var Hyperbola = /*#__PURE__*/function (_Conic2) {
   _inherits(Hyperbola, _Conic2);
+
+  var _super8 = _createSuper(Hyperbola);
 
   function Hyperbola() {
     _classCallCheck(this, Hyperbola);
 
-    return _possibleConstructorReturn(this, _getPrototypeOf(Hyperbola).apply(this, arguments));
+    return _super8.apply(this, arguments);
   }
 
   _createClass(Hyperbola, [{
@@ -1329,10 +1330,10 @@ function (_Conic2) {
 
 exports.Hyperbola = Hyperbola;
 
-var Parabola =
-/*#__PURE__*/
-function (_Conic3) {
+var Parabola = /*#__PURE__*/function (_Conic3) {
   _inherits(Parabola, _Conic3);
+
+  var _super9 = _createSuper(Parabola);
 
   _createClass(Parabola, [{
     key: "point_on",
@@ -1362,7 +1363,7 @@ function (_Conic3) {
 
     var nx = v.x + a * Math.cos(d) / 2,
         ny = v.y + a * Math.sin(d) / 2;
-    return _possibleConstructorReturn(this, _getPrototypeOf(Parabola).call(this, new Point(nx, ny), a, 0, d));
+    return _super9.call(this, new Point(nx, ny), a, 0, d);
   }
 
   _createClass(Parabola, [{
@@ -1411,9 +1412,7 @@ function (_Conic3) {
 
 exports.Parabola = Parabola;
 
-var TriangleMaker =
-/*#__PURE__*/
-function () {
+var TriangleMaker = /*#__PURE__*/function () {
   function TriangleMaker(vertices) {
     _classCallCheck(this, TriangleMaker);
 
@@ -1683,9 +1682,7 @@ function () {
 
 exports.TriangleMaker = TriangleMaker;
 
-var QuadrilateralMaker =
-/*#__PURE__*/
-function () {
+var QuadrilateralMaker = /*#__PURE__*/function () {
   function QuadrilateralMaker(vertices) {
     _classCallCheck(this, QuadrilateralMaker);
 
@@ -1955,20 +1952,20 @@ function sets_intersection(s1, s2) {
 
   var out = [];
   var s = s1.points[s1.points.length - 1];
-  var _iteratorNormalCompletion2 = true;
-  var _didIteratorError2 = false;
-  var _iteratorError2 = undefined;
+
+  var _iterator2 = _createForOfIteratorHelper(s1.points),
+      _step2;
 
   try {
-    for (var _iterator2 = s1.points[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
       var t = _step2.value;
       var v = s2.points[s2.points.length - 1];
-      var _iteratorNormalCompletion3 = true;
-      var _didIteratorError3 = false;
-      var _iteratorError3 = undefined;
+
+      var _iterator3 = _createForOfIteratorHelper(s2.points),
+          _step3;
 
       try {
-        for (var _iterator3 = s2.points[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
           var w = _step3.value;
 
           if (max(s.x, t.x) >= min(v.x, w.x) && max(v.x, w.x) >= min(s.x, t.x) && max(s.y, t.y) >= min(v.y, w.y) && max(v.y, w.y) >= min(s.y, t.y)) {
@@ -2003,35 +2000,17 @@ function sets_intersection(s1, s2) {
           v = w;
         }
       } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
+        _iterator3.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion3 && _iterator3.return != null) {
-            _iterator3.return();
-          }
-        } finally {
-          if (_didIteratorError3) {
-            throw _iteratorError3;
-          }
-        }
+        _iterator3.f();
       }
 
       s = t;
     }
   } catch (err) {
-    _didIteratorError2 = true;
-    _iteratorError2 = err;
+    _iterator2.e(err);
   } finally {
-    try {
-      if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
-        _iterator2.return();
-      }
-    } finally {
-      if (_didIteratorError2) {
-        throw _iteratorError2;
-      }
-    }
+    _iterator2.f();
   }
 
   return new Set(out);
@@ -2076,12 +2055,11 @@ function circle_set_intersection(set, c) {
     return hypot(s.x - c.x, s.y - c.y);
   }
 
-  var _iteratorNormalCompletion4 = true;
-  var _didIteratorError4 = false;
-  var _iteratorError4 = undefined;
+  var _iterator4 = _createForOfIteratorHelper(set.points),
+      _step4;
 
   try {
-    for (var _iterator4 = set.points[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+    for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
       var t = _step4.value;
       var d = dist(s);
       var e = dist(t);
@@ -2114,18 +2092,9 @@ function circle_set_intersection(set, c) {
       s = t;
     }
   } catch (err) {
-    _didIteratorError4 = true;
-    _iteratorError4 = err;
+    _iterator4.e(err);
   } finally {
-    try {
-      if (!_iteratorNormalCompletion4 && _iterator4.return != null) {
-        _iterator4.return();
-      }
-    } finally {
-      if (_didIteratorError4) {
-        throw _iteratorError4;
-      }
-    }
+    _iterator4.f();
   }
 
   return new Set(out);
@@ -2145,9 +2114,7 @@ function clean_label(text) {
   return text;
 }
 
-var Drawer =
-/*#__PURE__*/
-function () {
+var Drawer = /*#__PURE__*/function () {
   function Drawer() {
     _classCallCheck(this, Drawer);
   }
@@ -2382,17 +2349,17 @@ function dp(n) {
   return parseFloat(n).toFixed(7);
 }
 
-var SVGDrawer =
-/*#__PURE__*/
-function (_Drawer) {
+var SVGDrawer = /*#__PURE__*/function (_Drawer) {
   _inherits(SVGDrawer, _Drawer);
+
+  var _super10 = _createSuper(SVGDrawer);
 
   function SVGDrawer(svg, doc) {
     var _this7;
 
     _classCallCheck(this, SVGDrawer);
 
-    _this7 = _possibleConstructorReturn(this, _getPrototypeOf(SVGDrawer).call(this));
+    _this7 = _super10.call(this);
     _this7.svg = svg;
     _this7.doc = doc || document;
     _this7.shapes = {};
@@ -2453,28 +2420,19 @@ function (_Drawer) {
 
         if (!_this8.used_ids[id]) {
           delete _this8.elements[id];
-          var _iteratorNormalCompletion5 = true;
-          var _didIteratorError5 = false;
-          var _iteratorError5 = undefined;
+
+          var _iterator5 = _createForOfIteratorHelper(_this8.svg.querySelectorAll("[data-eukleides-id=\"".concat(id, "\"]"))),
+              _step5;
 
           try {
-            for (var _iterator5 = _this8.svg.querySelectorAll("[data-eukleides-id=\"".concat(id, "\"]"))[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+            for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
               var el = _step5.value;
               el.parentElement.removeChild(el);
             }
           } catch (err) {
-            _didIteratorError5 = true;
-            _iteratorError5 = err;
+            _iterator5.e(err);
           } finally {
-            try {
-              if (!_iteratorNormalCompletion5 && _iterator5.return != null) {
-                _iterator5.return();
-              }
-            } finally {
-              if (_didIteratorError5) {
-                throw _iteratorError5;
-              }
-            }
+            _iterator5.f();
           }
         }
       });
@@ -2600,29 +2558,19 @@ function (_Drawer) {
         e = olde;
         e.removeAttribute('transform');
       } else {
-        var _iteratorNormalCompletion6 = true;
-        var _didIteratorError6 = false;
-        var _iteratorError6 = undefined;
+        var _iterator6 = _createForOfIteratorHelper(this.svg.querySelectorAll("[data-eukleides-id=\"".concat(id, "\"]"))),
+            _step6;
 
         try {
-          for (var _iterator6 = this.svg.querySelectorAll("[data-eukleides-id=\"".concat(id, "\"]"))[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+          for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
             var _e2 = _step6.value;
 
             _e2.parentElement.removeChild(_e2);
           }
         } catch (err) {
-          _didIteratorError6 = true;
-          _iteratorError6 = err;
+          _iterator6.e(err);
         } finally {
-          try {
-            if (!_iteratorNormalCompletion6 && _iterator6.return != null) {
-              _iterator6.return();
-            }
-          } finally {
-            if (_didIteratorError6) {
-              throw _iteratorError6;
-            }
-          }
+          _iterator6.f();
         }
 
         e = this.doc.createElementNS('http://www.w3.org/2000/svg', name);
@@ -3426,7 +3374,7 @@ function (_Drawer) {
 
         z = (m_y - l.y) / t + l.x;
 
-        if (z >= m_x && z <= M_x && i < 2) {
+        if (z > m_x && z < M_x && i < 2) {
           x[i] = z;
           y[i] = m_y;
           i += 1;
@@ -3434,7 +3382,7 @@ function (_Drawer) {
 
         z = (M_y - l.y) / t + l.x;
 
-        if (z >= m_x && z <= M_x && i < 2) {
+        if (z > m_x && z < M_x && i < 2) {
           x[i] = z;
           y[i] = M_y;
           i += 1;

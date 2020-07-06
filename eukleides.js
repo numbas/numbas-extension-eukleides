@@ -2377,13 +2377,13 @@ class SVGDrawer extends Drawer {
                 i += 1;
             }
             z = (m_y-l.y)/t+l.x;
-            if(z >= m_x && z<= M_x && i<2) {
+            if(z > m_x && z< M_x && i<2) {
                 x[i] = z;
                 y[i] = m_y;
                 i += 1;
             }
             z = (M_y-l.y)/t+l.x;
-            if(z >= m_x && z<= M_x && i<2) {
+            if(z > m_x && z< M_x && i<2) {
                 x[i] = z;
                 y[i] = M_y;
                 i += 1;

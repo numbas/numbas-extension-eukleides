@@ -145,7 +145,8 @@ function describe_definitions(fns) {
         const close = '<span class="function-bracket">)</span>';
         const name = `<code class="function-name">${fn.name}</code>`;
         let application;
-        if(Numbas.jme.Parser.prototype.re.re_op.exec(fn.name)) {
+        var parser = new Numbas.jme.Parser();
+        if(parser.re.re_op.exec(fn.name)) {
             const prefix = Object.entries(Numbas.jme.prefixForm).find(([d,o])=>o==fn.name);
             if(prefix) {
                 application = `${prefix[0]} ${intype[0]}`;
@@ -184,6 +185,7 @@ Numbas.runImmediately(['jme'],function() {
 Numbas.queueScript('base',[],function(){});
 
 Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
+    Numbas.activateExtension('eukleides');
     var euk = Numbas.extensions.eukleides;
 
     var s = window.s = new Numbas.jme.Scope([Numbas.jme.builtinScope, euk.scope]);
