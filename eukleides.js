@@ -1883,10 +1883,10 @@ class SVGDrawer extends Drawer {
                 const m = element.getScreenCTM().inverse();
                 const p = this.svg.createSVGPoint();
                 p.x = e.clientX;
-                p.y = -e.clientY;
+                p.y = e.clientY;
                 const tp1 = p.matrixTransform(m);
                 p.x = sx;
-                p.y = -sy;
+                p.y = sy;
                 const tp0 = p.matrixTransform(m);
                 const [dx,dy] = [tp1.x-tp0.x,tp1.y-tp0.y];
                 ondrag(dx,dy);

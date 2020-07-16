@@ -2680,10 +2680,10 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
           var p = _this9.svg.createSVGPoint();
 
           p.x = e.clientX;
-          p.y = -e.clientY;
+          p.y = e.clientY;
           var tp1 = p.matrixTransform(m);
           p.x = sx;
-          p.y = -sy;
+          p.y = sy;
           var tp0 = p.matrixTransform(m);
           var dx = tp1.x - tp0.x,
               dy = tp1.y - tp0.y;

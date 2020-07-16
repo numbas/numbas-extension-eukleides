@@ -301,15 +301,16 @@ window.run_playground = function () {
       var name = code.value.slice(code.selectionStart, code.selectionEnd);
 
       if (name) {
-        var def = document.querySelector("[data-name=\"".concat(name, "\"]"));
+        try {
+          var def = document.querySelector("[data-name=\"".concat(name, "\"]"));
 
-        if (def) {
-          console.log(def);
-          def.classList.add('active');
-          def.scrollIntoView({
-            block: 'center'
-          });
-        }
+          if (def) {
+            def.classList.add('active');
+            def.scrollIntoView({
+              block: 'center'
+            });
+          }
+        } catch (e) {}
       }
     }
 
