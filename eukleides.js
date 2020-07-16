@@ -2181,7 +2181,6 @@ class SVGDrawer extends Drawer {
                 switch(this.local.dec) {
                     case DOTTED:
                         [x1,y1,x2,y2] = this.set_xy(A,B,C,this.SIZE(Math.sqrt(2)/8));
-                        console.log(x1,y1,x2,y2);
                         g.appendChild(this.draw_dot(B.x+x1+x2,B.y+y1+y2,this.SIZE(0.05)));
                         desc += ' marked with a dot';
                         break;

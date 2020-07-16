@@ -3086,7 +3086,6 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
               y1 = _this$set_xy2[1];
               x2 = _this$set_xy2[2];
               y2 = _this$set_xy2[3];
-              console.log(x1, y1, x2, y2);
               g.appendChild(this.draw_dot(B.x + x1 + x2, B.y + y1 + y2, this.SIZE(0.05)));
               desc += ' marked with a dot';
               break;
