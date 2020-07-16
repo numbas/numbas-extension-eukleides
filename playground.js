@@ -239,11 +239,13 @@ Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
         });
         const name = code.value.slice(code.selectionStart,code.selectionEnd);
         if(name) {
-            const def = document.querySelector(`[data-name="${name}"]`);
-            if(def) {
-                console.log(def);
-                def.classList.add('active');
-                def.scrollIntoView({block: 'center'});
+            try {
+                const def = document.querySelector(`[data-name="${name}"]`);
+                if(def) {
+                    def.classList.add('active');
+                    def.scrollIntoView({block: 'center'});
+                }
+            } catch(e) {
             }
         }
     }
