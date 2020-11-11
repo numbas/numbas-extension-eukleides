@@ -4519,7 +4519,7 @@ function color_schemes(n, kind) {
 window.eukleides = exports;})();
 Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension) {
 
-    var euk = eukleides;
+    var euk = window.eukleides;
     var math = Numbas.math;
     var jme = Numbas.jme;
     var types = extension.types = {};
@@ -5669,7 +5669,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         style_commands[color] = {color: color}
     });
 
-    var default_color_scheme = eukleides.colorbrewer['Trubetskoy'][6];
+    var default_color_scheme = euk.colorbrewer['Trubetskoy'][6];
     default_color_scheme.forEach(function(color,i) {
         style_commands['color'+(i+1)] = {color: color, color_description: 'color '+(i+1)};
     });
