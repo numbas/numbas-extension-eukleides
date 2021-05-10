@@ -4555,7 +4555,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         'eukleides_angle',
         {
             string: function(v) {
-                return new TString(math.niceNumber(math.precround(math.degrees(v.value),2))+'°');
+                return new TString(math.niceNumber(math.precround(math.mod(math.degrees(v.value),360),2))+'°');
             }
         },
         {
@@ -4571,7 +4571,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
                 }
             },
             displayString: function(a) {
-                return math.niceNumber(math.precround(math.degrees(a.value),2))+'°'.toString();
+                return math.niceNumber(math.precround(math.mod(math.degrees(a.value),360),2))+'°'.toString();
             }
         }
     );
