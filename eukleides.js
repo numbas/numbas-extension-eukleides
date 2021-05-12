@@ -1880,7 +1880,8 @@ class SVGDrawer extends Drawer {
             var onmove = (e) => {
                 e.preventDefault();
                 e = e.touches ? e.touches[0] : e;
-                const m = element.getScreenCTM().inverse();
+                let m = element.getScreenCTM().inverse();
+                if (m.d > 0) m = m.flipY();
                 const p = this.svg.createSVGPoint();
                 p.x = e.clientX;
                 p.y = e.clientY;
