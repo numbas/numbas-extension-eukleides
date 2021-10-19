@@ -40,15 +40,15 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
             }
         },
         {
-            tex: function(thing,tok,texArgs,settings) {
-                return settings.texNumber(tok.value,settings)+'°';
+            tex: function(thing,tok,texArgs) {
+                return this.number(tok.value)+'°';
             },
-            jme: function(tree,tok,bits,settings) {
+            jme: function(tree,tok,bits) {
                 var deg = math.degrees(tok.value);
                 if(Numbas.util.isInt(deg)) {
-                    return 'deg('+settings.jmeNumber(deg,settings)+')';
+                    return 'deg('+this.number(deg)+')';
                 } else {
-                    return 'rad('+settings.jmeNumber(tok.value,settings)+')';
+                    return 'rad('+this.number(tok.value)+')';
                 }
             },
             displayString: function(a) {
@@ -65,11 +65,11 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         'eukleides_point',
         {},
         {
-            tex: function(thing,tok,texArgs,settings) {
-                return '\\left( '+settings.jmeNumber(tok.value.x,settings)+', '+settings.jmeNumber(tok.value.y, settings)+' \\right)';
+            tex: function(thing,tok,texArgs) {
+                return '\\left( '+this.number(tok.value.x)+', '+this.number(tok.value.y, settings)+' \\right)';
             },
-            jme: function(tree,tok,bits,settings) {
-                return 'point('+settings.jmeNumber(tok.value.x,settings)+', '+settings.jmeNumber(tok.value.y,settings)+')';
+            jme: function(tree,tok,bits) {
+                return 'point('+this.number(tok.value.x)+', '+this.number(tok.value.y)+')';
             },
             displayString: function(p) {
                 return '('+math.niceNumber(p.value.x)+','+math.niceNumber(p.value.y)+')';
@@ -85,8 +85,8 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         'eukleides_line',
         {},
         {
-            jme: function(tree,tok,bits,settings) {
-                return 'line(point('+settings.jmeNumber(tok.value.x)+','+settings.jmeNumber(tok.value.y)+'),rad('+settings.jmeNumber(tok.value.a)+'))';
+            jme: function(tree,tok,bits) {
+                return 'line(point('+this.number(tok.value.x)+','+this.number(tok.value.y)+'),rad('+this.number(tok.value.a)+'))';
             }
         }
     );
@@ -103,10 +103,10 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
             }
         },
         {
-            tex: function(thing,tok,texArgs,settings) {
+            tex: function(thing,tok,texArgs) {
                 return tok.value.points.map(function(p) { return Numbas.jme.display.texify({tok:new TPoint(p)}) }).join(' \\ldots ');
             },
-            jme: function(tree,tok,bits,settings) {
+            jme: function(tree,tok,bits) {
                 return tok.value.points.map(function(p) { return Numbas.jme.display.treeToJME({tok: new TPoint(p)}) }).join(' .. ');
             },
             displayString: function(l) {
@@ -123,8 +123,8 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         'eukleides_circle',
         {},
         {
-            jme: function(tree,tok,bits,settings) {
-                return 'circle(point('+settings.jmeNumber(tok.value.x,settings)+','+settings.jmeNumber(tok.value.y,settings)+'),'+settings.jmeNumber(tok.value.r,settings)+')';
+            jme: function(tree,tok,bits) {
+                return 'circle(point('+this.number(tok.value.x)+','+this.number(tok.value.y)+'),'+this.number(tok.value.r)+')';
             }
         }
     );
@@ -137,9 +137,9 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         'eukleides_conic',
         {},
         {
-            jme: function(tree,tok,bits,settings) {
+            jme: function(tree,tok,bits) {
                 var foci = tok.value.foci().map(function(p){ return Numbas.jme.display.treeToJME({tok:new TPoint(p)}) });
-                return 'conic('+foci[0]+','+foci[1]+','+settings.jmeNumber(tok.value.a,settings)+')';
+                return 'conic('+foci[0]+','+foci[1]+','+this.number(tok.value.a)+')';
             }
         }
     );
@@ -167,7 +167,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         'eukleides_angle_label',
         {},
         {
-            jme: function(tree,tok,bits,settings) {
+            jme: function(tree,tok,bits) {
                 var points = [tok.a,tok.b,tok.c].map(function(p){ return Numbas.jme.display.treeToJME({tok: new TPoint(p)}) });
                 return 'angle('+points.join(',')+')';
             },
