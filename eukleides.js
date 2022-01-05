@@ -196,7 +196,7 @@ class Point extends Obj {
         return new Point(2*O.x - this.x, 2*O.y - this.y);
     }
 
-    rotate(a,O) {
+    rotate(O,a) {
         const c = cos(a);
         const s = sin(a);
         const x = this.x - O.x;

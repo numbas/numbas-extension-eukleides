@@ -208,7 +208,7 @@ var Point = /*#__PURE__*/function (_Obj) {
     }
   }, {
     key: "rotate",
-    value: function rotate(a, O) {
+    value: function rotate(O, a) {
       var c = cos(a);
       var s = sin(a);
       var x = this.x - O.x;
@@ -4988,7 +4988,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
     },{description:'180° rotation of the first point around the second.'}));
 
     extension.scope.addFunction(new funcObj('rotate',[TPoint,TPoint,TAngle],TPoint,function(p,origin,angle) {
-        return p.rotate(angle,origin);
+        return p.rotate(origin,angle);
     },{description:'Rotate the first point the given angle around the second.'}));
 
     extension.scope.addFunction(new funcObj('distance',[TPoint,TPoint],TNum,function(a,b) {
