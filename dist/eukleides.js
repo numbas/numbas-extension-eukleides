@@ -6065,10 +6065,10 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
     }
 
     var sig_draw_eukleides = sig.sequence(
-        sig.type('string'),
-        sig.optional(sig.sequence(sig.type('number'),sig.type('number'),sig.type('number'),sig.type('number'))),
-        sig.or(sig_eukleides,sig.type('list')),
-        sig.optional(sig.type('dict'))
+        named(sig.type('string'),"description"),
+        sig.optional(sig.sequence(snum('left'),snum('bottom'),snum('right'),snum('top'))),
+        named(sig.or(sig_eukleides,sig.type('list')),'drawing'),
+        named(sig.optional(sig.type('dict')),'initial_values')
     );
     extension.scope.addFunction(new funcObj('eukleides',[sig_draw_eukleides],THTML,null,{
         evaluate: function(args,scope) {
