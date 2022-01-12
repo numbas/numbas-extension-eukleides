@@ -165,7 +165,7 @@ The second argument of `eukleides` evaluates to a list of objects to be drawn - 
 You can use vectors to translate any object in a diagram. 
 
 ```
-eukleides("A diagram",
+eukleides("A parallelogram",
   let(
     u, vector(1,0)
   , v, vector(1,2)
@@ -182,7 +182,7 @@ The example above translates the point `a` by two different vectors.
 When you repeat a construction, you can often make your code easier to read by using the `map` function:
 
 ```
-eukleides("A diagram",
+eukleides("Three congruent parallelograms",
   let(
     u, vector(1,0)
   , v, vector(1,2)
@@ -202,6 +202,19 @@ Drawing modifiers change aspects of how objects are drawn, such as colour or sha
 When drawing an object, just write the modifier immediately afterwards to apply it.
 A modified object becomes a `drawing` data type, which collects up the object(s) being drawn with the modifiers, so you can't use the result in further constructions.
 To minimise the inconvenience, we try to apply modifiers last: for example, `(origin red) .. point(2,0)` doesn't work, but `origin .. point(2,0) red` does - the line segment is constructed before the `red` modifier is applied.
+
+You can specify the bounding box of the diagram by providing the coordinates of the bottom-left and top-right of the box after the description:
+
+```
+eukleides("Axes and a point at (8,3)", -1,-1, 10,5,
+  [ line(origin,deg(0))
+  , line(origin,deg(90))
+  , point(8,3)
+  ]
+)
+```
+
+If you don't specify the bounding box, then Eukleides automatically picks one, containing all of the drawn elements.
 
 ## Use in Numbas
 
