@@ -2,6 +2,12 @@
 
 This extension for Numbas contains a port of the [Eukleides geometrical drawing language](http://eukleides.org/) by Christian Obrecht, with extensions to make diagrams interactive and accessibility improvements.
 
+# Using this extension
+
+This extension is available on [the public Numbas editor at numbas.mathcentre.ac.uk](https://numbas.mathcentre.ac.uk/).
+
+To use this extension with your own instance of the editor, you only need the file `dist/eukleides.js`.
+
 ## Documentation 
 
 There's [documentation on how the extension works and a full function reference](docs/index.md).
