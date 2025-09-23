@@ -1739,7 +1739,13 @@ class SVGDrawer extends Drawer {
         super.setup_frame(min_x,min_y,max_x,max_y,scale);
 
         this.svg.setAttribute('viewBox',`${dp(min_x)} ${dp(min_y)} ${dp(max_x-min_x)} ${dp(max_y-min_y)}`);
-        this.svg.style.transform = `scale(${dp(scale)},${dp(-scale)})`;
+        
+        if(!this.container) {
+            this.container = this.doc.createElementNS('http://www.w3.org/2000/svg','g');
+            this.svg.appendChild(this.container);
+        }
+
+        this.container.setAttribute('transform', `translate(0 ${dp(max_y+min_y)}) scale(${dp(scale)} ${dp(-scale)})`);
     }
 
     check_color() { }
@@ -1819,7 +1825,7 @@ class SVGDrawer extends Drawer {
         if(content!==undefined) {
             e.innerHTML = content;
         }
-        this.svg.appendChild(e);
+        this.container.appendChild(e);
         return e;
     }
 
