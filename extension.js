@@ -1142,7 +1142,8 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         'bold': {bold: true},
         'italic': {italic: true},
         'verbose': {aria_mode: 'verbose'},
-        'nospoilers': {aria_mode: 'nospoilers'}
+        'nospoilers': {aria_mode: 'nospoilers'},
+        'aligned': {align_label: true},
     }
 
     var colors = ['black','darkgray','gray','lightgray','white'];
@@ -1173,8 +1174,8 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         return new TDrawing([],{description: description});
     },{unwrapValues: true, description:'Set the accessible description for the object being drawn.'}));
 
-    extension.scope.addFunction(new funcObj('text',[TString],TDrawing,function(text) {
-        return new TDrawing([],{label:true, label_text: text, label_dist: 0});
+    extension.scope.addFunction(new funcObj('text',[TString, sig.optional(sig.type('eukleides_angle'))],TDrawing,function(text, angle) {
+        return new TDrawing([],{label:true, label_text: text, label_dist: 0, label_direction: angle});
     }, {unwrapValues: true, description:'Draw text at a point.'}));
 
     extension.scope.addFunction(new funcObj('angle',[TPoint,TPoint,TPoint],TAngleLabel,function(a,b,c) {

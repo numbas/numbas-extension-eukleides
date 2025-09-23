@@ -2043,13 +2043,13 @@ class SVGDrawer extends Drawer {
     }
 
     draw_text(text,x,y) {
-        const e = this.element('text',{x:x,y:-y,'dominant-baseline': 'central', transform: 'scale(1,-1)'},clean_label(text));
+        const e = this.element('text',{'dominant-baseline': 'central', transform: `scale(1,-1) translate(${x},${-y})`},clean_label(text));
         this.set_font(e);
         this.set_fill(e,false);
         return e;
     }
 
-    label_point(A) {
+    label_point(A, align_angle) {
         const text = this.local.label_text;
         if(!text) {
             return;
@@ -2066,27 +2066,36 @@ class SVGDrawer extends Drawer {
         const y = A.y+dist*sin(angle);
         const e = this.draw_text(text,x,y);
         let textAlign = 'start';
-        let dy = '0';
-        if(angle>=3*PI/4 || angle<=-3*PI/4) {
+        let dy = 0;
+        if(this.local.align_label) {
+            dy = -0.5 * dist;
+            textAlign = 'middle';
+        } else if(angle>=3*PI/4 || angle<=-3*PI/4) {
             textAlign = 'end';
         } else if(angle>PI/4 || angle<-PI/4) {
             textAlign = 'middle';
             if(angle>PI/4) {
-                dy = '-0.5em';
+                dy = -0.5;
             } else {
-                dy = '0.5em';
+                dy = 0.5;
             }
         }
         if(dist==0) {
             textAlign = 'middle';
         }
-        e.setAttribute('dy',dy);
+        e.setAttribute('dy',`${dy}em`);
         e.setAttribute('text-anchor',textAlign);
         let desc = `label "${clean_label(text)}"`;
         if(this.aria_mode==VERBOSE) {
             desc += ` at ${A}`;
         } 
         this.set_aria_label(e,desc);
+        if(align_angle === undefined) {
+            align_angle = angle;
+        }
+        if(this.local.align_label) {
+            this.transform(e, `rotate(${dp(RTOD(-align_angle))})`);
+        }
         return e;
     }
 
@@ -2102,9 +2111,8 @@ class SVGDrawer extends Drawer {
         let desc = s.getAttribute('aria-label') || '';
         g.appendChild(s);
 
-        let mark, text;
         if(this.local.label_segment!=NONE) {
-            mark = this.transform(this.element('path'), `translate(${dp(x)} ${dp(y)}) scale(${dp(size)}) rotate(${dp(RTOD(angle))})`);
+            const mark = this.transform(this.element('path'), `translate(${dp(x)} ${dp(y)}) scale(${dp(size)}) rotate(${dp(RTOD(angle))})`);
             this.set_stroke(mark);
             mark.setAttribute('stroke-width',mark.getAttribute('stroke-width')/size);
             this.set_style(mark);
@@ -2132,7 +2140,7 @@ class SVGDrawer extends Drawer {
                 this.local.label_direction = argument(A,B)+PI/2;
             }
             const m = Point.create_midpoint(new Set([A,B]));
-            text = this.label_point(m);
+            const text = this.label_point(m, angle);
             this.pop_local_settings();
             g.appendChild(text);
             text.removeAttribute('aria-label');

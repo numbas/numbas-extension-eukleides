@@ -54,6 +54,7 @@ const modifier_descriptions = {
     'italic': 'Text is drawn in italic style.',
     'verbose': 'Accessible descriptions give information not explicitly given in the visual rendering, such as coordinates and bearings.',
     'nospoilers': 'Accessible descriptions will not give any information not explicitly given in the visual rendering.',
+    'aligned': 'Labels on line segments are drawn parallel to the line.',
 };
 
 function nice_type_name(name) {
