@@ -1398,14 +1398,12 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
                 requestAnimationFrame(frame);
             }
         }
-        if(animates) {
-            drawer.svg.addEventListener('mouseover',function(e) {
-                ctx.animating = animates;
-            });
-            drawer.svg.addEventListener('mouseout',function(e) {
-                ctx.animating = false;
-            });
-        }
+        drawer.svg.addEventListener('pointerenter',function(e) {
+            ctx.animating = animates || takes_input;
+        });
+        drawer.svg.addEventListener('pointerleave',function(e) {
+            ctx.animating = false;
+        });
         if(takes_input) {
             drawer.svg.addEventListener('mousemove',function(e) {
                 var r = ctx.drawer.svg.getBoundingClientRect();
@@ -1450,9 +1448,13 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
             this.redraw(this.drawer,this.make_values(this.values));
         },
 
-        make_values: function(values) {
+        get_time: function() {
             var now = new Date();
-            var time = (now - this.start_time)/1000;
+            return (now - this.start_time)/1000;
+        },
+
+        make_values: function(values) {
+            var time = this.get_time();
 
             var vars = {
                 time: time,
@@ -1590,13 +1592,15 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
 
             var ctx = new InteractiveContext(drawer,title_tree,objects,scope,initial_values,min_x===undefined);
 
-            if(min_x===undefined) {
+            if(min_x === undefined) {
                 var res = find_bounding_box(svg);
                 drawer.setup_frame(res.min_x,res.min_y,res.max_x,res.max_y,1);
                 ctx.draw();
             }
 
-            return new THTML(svg);
+            const tok = new THTML(svg);
+            tok.ctx = ctx;
+            return tok;
         },
         description:'Draw a Eukleides diagram.'
     }));
