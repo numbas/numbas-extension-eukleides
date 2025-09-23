@@ -178,13 +178,6 @@ function arg_names(fn) {
 
 Numbas.queueScript('base',[], function() {});
 
-Numbas.runImmediately(['jme'],function() {
-});
-
-
-
-Numbas.queueScript('base',[],function(){});
-
 Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
     Numbas.activateExtension('eukleides');
     var euk = Numbas.extensions.eukleides;

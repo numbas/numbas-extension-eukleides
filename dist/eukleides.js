@@ -2471,7 +2471,13 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
       _get(_getPrototypeOf(SVGDrawer.prototype), "setup_frame", this).call(this, min_x, min_y, max_x, max_y, scale);
 
       this.svg.setAttribute('viewBox', "".concat(dp(min_x), " ").concat(dp(min_y), " ").concat(dp(max_x - min_x), " ").concat(dp(max_y - min_y)));
-      this.svg.style.transform = "scale(".concat(dp(scale), ",").concat(dp(-scale), ")");
+
+      if (!this.container) {
+        this.container = this.doc.createElementNS('http://www.w3.org/2000/svg', 'g');
+        this.svg.appendChild(this.container);
+      }
+
+      this.container.setAttribute('transform', "translate(0 ".concat(dp(max_y + min_y), ") scale(").concat(dp(scale), " ").concat(dp(-scale), ")"));
     }
   }, {
     key: "check_color",
@@ -2506,6 +2512,7 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
       }
 
       e.setAttribute('fill', this.local.color);
+      e.style['fill'] = this.local.color;
       e.style.opacity = this.local.opacity;
     }
   }, {
@@ -2517,6 +2524,7 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
       e.setAttribute('stroke-linejoin', 'round');
       e.setAttribute('stroke-linecap', 'round');
       e.style.opacity = this.local.opacity;
+      e.style['stroke'] = this.local.color;
     }
   }, {
     key: "set_style",
@@ -2597,7 +2605,7 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
         e.innerHTML = content;
       }
 
-      this.svg.appendChild(e);
+      this.container.appendChild(e);
       return e;
     }
   }, {
@@ -2728,7 +2736,7 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
     }
   }, {
     key: "arc",
-    value: function arc(x, y, r, a, b) {
+    value: function arc(x, y, r, a, b, fill) {
       var d = b - a;
       var sweep = 0;
 
@@ -2745,8 +2753,14 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
           r: r
         });
       } else {
+        var _d2 = "M ".concat(dp(x + Math.cos(a) * r), " ").concat(dp(y + Math.sin(a) * r), " A ").concat(dp(r), " ").concat(dp(r), " 0 ").concat(large_circle, " ").concat(sweep, " ").concat(dp(x + Math.cos(b) * r), " ").concat(dp(y + Math.sin(b) * r));
+
+        if (fill) {
+          _d2 += "L ".concat(dp(x), " ").concat(dp(y));
+        }
+
         return this.element('path', {
-          d: "M ".concat(dp(x + Math.cos(a) * r), " ").concat(dp(y + Math.sin(a) * r), " A ").concat(dp(r), " ").concat(dp(r), " 0 ").concat(large_circle, " ").concat(sweep, " ").concat(dp(x + Math.cos(b) * r), " ").concat(dp(y + Math.sin(b) * r))
+          d: _d2
         });
       }
     }
@@ -2911,10 +2925,8 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
     key: "draw_text",
     value: function draw_text(text, x, y) {
       var e = this.element('text', {
-        x: x,
-        y: -y,
         'dominant-baseline': 'central',
-        transform: 'scale(1,-1)'
+        transform: "scale(1,-1) translate(".concat(x, ",").concat(-y, ")")
       }, clean_label(text));
       this.set_font(e);
       this.set_fill(e, false);
@@ -2922,7 +2934,7 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
     }
   }, {
     key: "label_point",
-    value: function label_point(A) {
+    value: function label_point(A, align_angle) {
       var text = this.local.label_text;
 
       if (!text) {
@@ -2944,17 +2956,20 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
       var y = A.y + dist * sin(angle);
       var e = this.draw_text(text, x, y);
       var textAlign = 'start';
-      var dy = '0';
+      var dy = 0;
 
-      if (angle >= 3 * PI / 4 || angle <= -3 * PI / 4) {
+      if (this.local.align_label) {
+        dy = -0.5 * dist;
+        textAlign = 'middle';
+      } else if (angle >= 3 * PI / 4 || angle <= -3 * PI / 4) {
         textAlign = 'end';
       } else if (angle > PI / 4 || angle < -PI / 4) {
         textAlign = 'middle';
 
         if (angle > PI / 4) {
-          dy = '-0.5em';
+          dy = -0.5;
         } else {
-          dy = '0.5em';
+          dy = 0.5;
         }
       }
 
@@ -2962,7 +2977,7 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
         textAlign = 'middle';
       }
 
-      e.setAttribute('dy', dy);
+      e.setAttribute('dy', "".concat(dy, "em"));
       e.setAttribute('text-anchor', textAlign);
       var desc = "label \"".concat(clean_label(text), "\"");
 
@@ -2971,6 +2986,15 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
       }
 
       this.set_aria_label(e, desc);
+
+      if (align_angle === undefined) {
+        align_angle = angle;
+      }
+
+      if (this.local.align_label) {
+        this.transform(e, "rotate(".concat(dp(RTOD(-align_angle)), ")"));
+      }
+
       return e;
     }
   }, {
@@ -2984,10 +3008,9 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
       var s = this.draw_polygon(new Set([A, B]));
       var desc = s.getAttribute('aria-label') || '';
       g.appendChild(s);
-      var mark, text;
 
       if (this.local.label_segment != NONE) {
-        mark = this.transform(this.element('path'), "translate(".concat(dp(x), " ").concat(dp(y), ") scale(").concat(dp(size), ") rotate(").concat(dp(RTOD(angle)), ")"));
+        var mark = this.transform(this.element('path'), "translate(".concat(dp(x), " ").concat(dp(y), ") scale(").concat(dp(size), ") rotate(").concat(dp(RTOD(angle)), ")"));
         this.set_stroke(mark);
         mark.setAttribute('stroke-width', mark.getAttribute('stroke-width') / size);
         this.set_style(mark);
@@ -3022,7 +3045,7 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
         }
 
         var m = Point.create_midpoint(new Set([A, B]));
-        text = this.label_point(m);
+        var text = this.label_point(m, angle);
         this.pop_local_settings();
         g.appendChild(text);
         text.removeAttribute('aria-label');
@@ -3509,7 +3532,7 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
   }, {
     key: "fill_arc",
     value: function fill_arc(c, a, b) {
-      var arc = this.arc(c.x, c.y, c.r, b, a);
+      var arc = this.arc(c.x, c.y, c.r, b, a, true);
       this.set_fill(arc);
       this.set_style(arc);
       var desc = 'filled arc';
@@ -4850,6 +4873,12 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         s.param_name = name;
         return s;
     }
+    function sint(name) {
+        var s = sig.type('integer');
+        s.param_name = name;
+        return s;
+    }
+
     function snumorangle(name_num,name_angle) {
         return sig.optional(sig.or(snum(name_num),sangle(name_angle)));
     }
@@ -5661,7 +5690,8 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         'bold': {bold: true},
         'italic': {italic: true},
         'verbose': {aria_mode: 'verbose'},
-        'nospoilers': {aria_mode: 'nospoilers'}
+        'nospoilers': {aria_mode: 'nospoilers'},
+        'aligned': {align_label: true},
     }
 
     var colors = ['black','darkgray','gray','lightgray','white'];
@@ -5692,8 +5722,8 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         return new TDrawing([],{description: description});
     },{unwrapValues: true, description:'Set the accessible description for the object being drawn.'}));
 
-    extension.scope.addFunction(new funcObj('text',[TString],TDrawing,function(text) {
-        return new TDrawing([],{label:true, label_text: text, label_dist: 0});
+    extension.scope.addFunction(new funcObj('text',[TString, sig.optional(sig.type('eukleides_angle'))],TDrawing,function(text, angle) {
+        return new TDrawing([],{label:true, label_text: text, label_dist: 0, label_direction: angle});
     }, {unwrapValues: true, description:'Draw text at a point.'}));
 
     extension.scope.addFunction(new funcObj('angle',[TPoint,TPoint,TPoint],TAngleLabel,function(a,b,c) {
@@ -5819,6 +5849,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
     function create_svg() {
         var id = 'eukleides-diagram-'+(svg_acc++)+'-';
         var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+        svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
         svg.setAttribute('role','img');
         var title = document.createElementNS('http://www.w3.org/2000/svg','title');
         title.setAttribute('id',id+'title');
@@ -5915,14 +5946,12 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
                 requestAnimationFrame(frame);
             }
         }
-        if(animates) {
-            drawer.svg.addEventListener('mouseover',function(e) {
-                ctx.animating = animates;
-            });
-            drawer.svg.addEventListener('mouseout',function(e) {
-                ctx.animating = false;
-            });
-        }
+        drawer.svg.addEventListener('pointerenter',function(e) {
+            ctx.animating = animates || takes_input;
+        });
+        drawer.svg.addEventListener('pointerleave',function(e) {
+            ctx.animating = false;
+        });
         if(takes_input) {
             drawer.svg.addEventListener('mousemove',function(e) {
                 var r = ctx.drawer.svg.getBoundingClientRect();
@@ -5967,9 +5996,13 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
             this.redraw(this.drawer,this.make_values(this.values));
         },
 
-        make_values: function(values) {
+        get_time: function() {
             var now = new Date();
-            var time = (now - this.start_time)/1000;
+            return (now - this.start_time)/1000;
+        },
+
+        make_values: function(values) {
+            var time = this.get_time();
 
             var vars = {
                 time: time,
@@ -6107,13 +6140,15 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
 
             var ctx = new InteractiveContext(drawer,title_tree,objects,scope,initial_values,min_x===undefined);
 
-            if(min_x===undefined) {
+            if(min_x === undefined) {
                 var res = find_bounding_box(svg);
                 drawer.setup_frame(res.min_x,res.min_y,res.max_x,res.max_y,1);
                 ctx.draw();
             }
 
-            return new THTML(svg);
+            const tok = new THTML(svg);
+            tok.ctx = ctx;
+            return tok;
         },
         description:'Draw a Eukleides diagram.'
     }));
@@ -6135,4 +6170,21 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         }
         return vars;
     }
+
+    extension.scope.addFunction(new funcObj('grid',[sint('columns'), sint('rows'), snum('column_gap'), snum('row_gap'),named(sig.type('lambda'), 'fn')], TList, null, {
+      evaluate: function(args,scope) {
+        const [cols,rows,colgap,rowgap] = args.slice(0,4).map(v=>jme.unwrapValue(v));
+        const fn = args[4];
+        var o = [];
+        for(let col=0;col<cols;col++) {
+          for(let row=0;row<rows;row++) {
+            const drawing = fn.evaluate([new TInt(col),new TInt(row)],scope);
+            var v = vec([col*colgap, row*rowgap]);
+            o.push(translate_object(drawing,v));
+          }
+        }
+        return new TList(o);
+      },
+      description: 'Create a grid of smaller drawings. The <code>fn</code> anonymous function should take the column and row index as its arguments.'
+    }));
 });

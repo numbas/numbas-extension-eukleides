@@ -71,7 +71,8 @@ window.run_playground = function () {
     'bold': 'Text is drawn in boldface.',
     'italic': 'Text is drawn in italic style.',
     'verbose': 'Accessible descriptions give information not explicitly given in the visual rendering, such as coordinates and bearings.',
-    'nospoilers': 'Accessible descriptions will not give any information not explicitly given in the visual rendering.'
+    'nospoilers': 'Accessible descriptions will not give any information not explicitly given in the visual rendering.',
+    'aligned': 'Labels on line segments are drawn parallel to the line.'
   };
 
   function nice_type_name(name) {
@@ -231,8 +232,6 @@ window.run_playground = function () {
     return args;
   }
 
-  Numbas.queueScript('base', [], function () {});
-  Numbas.runImmediately(['jme'], function () {});
   Numbas.queueScript('base', [], function () {});
   Numbas.queueScript('demo', ['extensions/eukleides/eukleides.js'], function () {
     Numbas.activateExtension('eukleides');
