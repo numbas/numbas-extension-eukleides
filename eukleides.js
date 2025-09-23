@@ -1928,7 +1928,7 @@ class SVGDrawer extends Drawer {
         return c;
     }
 
-    arc(x,y,r,a,b) {
+    arc(x,y,r,a,b,fill) {
         let d = b-a;
         let sweep = 0;
         if(d>0) {
@@ -1938,7 +1938,11 @@ class SVGDrawer extends Drawer {
         if(d>=2*PI) {
             return this.element('circle',{cx:x,cy:y,r:r});
         } else {
-            return this.element('path',{d: `M ${dp(x+Math.cos(a)*r)} ${dp(y+Math.sin(a)*r)} A ${dp(r)} ${dp(r)} 0 ${large_circle} ${sweep} ${dp(x+Math.cos(b)*r)} ${dp(y+Math.sin(b)*r)}`});
+            let d = `M ${dp(x+Math.cos(a)*r)} ${dp(y+Math.sin(a)*r)} A ${dp(r)} ${dp(r)} 0 ${large_circle} ${sweep} ${dp(x+Math.cos(b)*r)} ${dp(y+Math.sin(b)*r)}`;
+            if(fill) {
+              d += `L ${dp(x)} ${dp(y)}`;
+            }
+            return this.element('path',{d});
         }
     }
 
@@ -2491,7 +2495,7 @@ class SVGDrawer extends Drawer {
     }
 
     fill_arc(c,a,b) {
-        const arc = this.arc(c.x,c.y,c.r,b,a);
+        const arc = this.arc(c.x, c.y, c.r, b, a, true);
         this.set_fill(arc);
         this.set_style(arc);
         let desc = 'filled arc';
