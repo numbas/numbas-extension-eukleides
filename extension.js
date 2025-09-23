@@ -331,6 +331,12 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         s.param_name = name;
         return s;
     }
+    function sint(name) {
+        var s = sig.type('integer');
+        s.param_name = name;
+        return s;
+    }
+
     function snumorangle(name_num,name_angle) {
         return sig.optional(sig.or(snum(name_num),sangle(name_angle)));
     }
@@ -1622,4 +1628,21 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
         }
         return vars;
     }
+
+    extension.scope.addFunction(new funcObj('grid',[sint('columns'), sint('rows'), snum('column_gap'), snum('row_gap'),named(sig.type('lambda'), 'fn')], TList, null, {
+      evaluate: function(args,scope) {
+        const [cols,rows,colgap,rowgap] = args.slice(0,4).map(v=>jme.unwrapValue(v));
+        const fn = args[4];
+        var o = [];
+        for(let col=0;col<cols;col++) {
+          for(let row=0;row<rows;row++) {
+            const drawing = fn.evaluate([new TInt(col),new TInt(row)],scope);
+            var v = vec([col*colgap, row*rowgap]);
+            o.push(translate_object(drawing,v));
+          }
+        }
+        return new TList(o);
+      },
+      description: 'Create a grid of smaller drawings. The <code>fn</code> anonymous function should take the column and row index as its arguments.'
+    }));
 });
