@@ -1767,6 +1767,7 @@ class SVGDrawer extends Drawer {
             }
         }
         e.setAttribute('fill',this.local.color);
+        e.style['fill'] = this.local.color;
         e.style.opacity = this.local.opacity;
     }
     set_stroke(e) {
@@ -1776,6 +1777,7 @@ class SVGDrawer extends Drawer {
         e.setAttribute('stroke-linejoin','round');
         e.setAttribute('stroke-linecap','round');
         e.style.opacity = this.local.opacity;
+        e.style['stroke'] = this.local.color;
     }
     set_style(e) {
         let s = '';
