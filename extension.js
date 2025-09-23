@@ -1301,6 +1301,7 @@ Numbas.addExtension('eukleides',['math','jme','jme-display'], function(extension
     function create_svg() {
         var id = 'eukleides-diagram-'+(svg_acc++)+'-';
         var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+        svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
         svg.setAttribute('role','img');
         var title = document.createElementNS('http://www.w3.org/2000/svg','title');
         title.setAttribute('id',id+'title');
