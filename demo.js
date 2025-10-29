@@ -9,6 +9,7 @@ Numbas.queueScript('base',[],function(){});
 
 Numbas.queueScript('demo',['extensions/eukleides/eukleides.js'],function() {
     Numbas.activateExtension('eukleides');
+    Numbas.locale.init();
     var s = window.s = new Numbas.jme.Scope([Numbas.jme.builtinScope, Numbas.extensions.eukleides.scope]);
 
     const examples = document.getElementById('examples');
