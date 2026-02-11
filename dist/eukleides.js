@@ -2685,6 +2685,8 @@ var SVGDrawer = /*#__PURE__*/function (_Drawer) {
           e = e.touches ? e.touches[0] : e;
           var m = element.getScreenCTM().inverse();
 
+          if (m.d > 0) m = m.flipY();
+
           var p = _this9.svg.createSVGPoint();
 
           p.x = e.clientX;
